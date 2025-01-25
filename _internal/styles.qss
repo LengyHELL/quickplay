@@ -1,0 +1,7 @@
+QLineEdit {
+    height: 24px;
+}
+
+QPushButton {
+    height: 24px;
+}
