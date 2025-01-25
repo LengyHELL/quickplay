@@ -19,8 +19,8 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QScrollBar,
 )
-
 from PyQt6.QtCore import QStringListModel
+from PyQt6.QtGui import QIcon
 
 WINDOW_MIN_WIDTH = 600
 WINDOW_MIN_HEIGHT = 400
@@ -32,6 +32,7 @@ class QuickplayView(QMainWindow):
         super().__init__()
         self.setWindowTitle("Quickplay")
         self.setMinimumSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
+        self.setWindowIcon(QIcon("_internal/icon.ico"))
 
         self.titleSelect = TitleSelect(self)
         self.episodeSelect = EpisodeSelect(self)

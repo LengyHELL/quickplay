@@ -2,3 +2,5 @@
 .vscode
 build
 dist
+_internal/folders.txt
+_internal/quickplay.txt
