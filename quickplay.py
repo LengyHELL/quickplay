@@ -24,7 +24,6 @@ from PyQt6.QtGui import QIcon
 
 WINDOW_MIN_WIDTH = 600
 WINDOW_MIN_HEIGHT = 400
-# python -m PyInstaller --noconfirm quickplay.spec
 
 
 class QuickplayView(QMainWindow):
@@ -174,6 +173,8 @@ class QuickplayController:
         self._readTitles()
         self._filterTitles()
         self._connectInputs()
+        self._setTitleSelectDisable()
+        self._setEpisodeSelectDisable()
 
     def _parseArguments(self):
         args = self._model.parseArguments()
@@ -190,12 +191,27 @@ class QuickplayController:
         self._view.titleSelect.next.clicked.connect(self._goToEpisodes)
         self._view.titleSelect.startPrevious.clicked.connect(partial(self._openPlayer, []))
         self._view.titleSelect.list.doubleClicked.connect(self._goToEpisodes)
+        self._view.titleSelect.list.selectionModel().selectionChanged.connect(
+            self._setTitleSelectDisable
+        )
 
         self._view.episodeSelect.search.textChanged.connect(self._filterEpisodes)
         self._view.episodeSelect.back.clicked.connect(partial(self._selectPage, 0))
         self._view.episodeSelect.startAll.clicked.connect(self._startAllEpisodes)
         self._view.episodeSelect.start.clicked.connect(self._startSelectedEpisodes)
         self._view.episodeSelect.list.doubleClicked.connect(self._startSelectedEpisodes)
+        self._view.episodeSelect.list.selectionModel().selectionChanged.connect(
+            self._setEpisodeSelectDisable
+        )
+
+    def _setTitleSelectDisable(self):
+        disabled =  len(self._view.titleSelect.list.selectedIndexes()) <= 0
+        self._view.titleSelect.next.setDisabled(disabled)
+
+    def _setEpisodeSelectDisable(self):
+        disabled =  len(self._view.episodeSelect.list.selectedIndexes()) <= 0
+        self._view.episodeSelect.start.setDisabled(disabled)
+
 
     def _readTitles(self):
         self.titleList: list[tuple[str, str]] = []
@@ -213,7 +229,12 @@ class QuickplayController:
 
                 dirs = os.listdir(f)
                 for d in dirs:
-                    if os.path.isdir(os.path.join(f, d)):
+                    path = os.path.join(f, d)
+                    if os.path.isdir(path) and any([
+                        os.path.isfile(os.path.join(path, f)) and
+                        os.path.splitext(os.path.join(path, f))[1] in self.extensions
+                        for f in os.listdir(path)
+                    ]):
                         self.titleList.append((f, d))
 
     def _filterTitles(self, text = ""):
@@ -227,6 +248,7 @@ class QuickplayController:
                 )
             )
 
+        self._view.titleSelect.list.clearSelection()
         self._view.titleSelect.listModel.setStringList([l[1] for l in self.filteredTitles])
 
     def _goToEpisodes(self):
@@ -263,6 +285,7 @@ class QuickplayController:
                 )
             )
 
+        self._view.episodeSelect.list.clearSelection()
         self._view.episodeSelect.listModel.setStringList(self.filteredEpisodes)
 
     def _getEpisodes(self):
