@@ -299,6 +299,8 @@ class QuickplayController:
         self._openPlayer([self.filteredEpisodes[i] for i in indexes])
 
     def _openPlayer(self, episodes):
+        playerArgs = f" --save-position-on-quit --playlist={self.playlistFile}"
+
         if len(episodes) > 0:
             with open(self.playlistFile, "w", encoding="utf-8") as file:
                 index = self._view.titleSelect.list.selectedIndexes()[0].row()
@@ -308,8 +310,10 @@ class QuickplayController:
                     line = os.path.join(base, title, episode) + "\n"
                     file.write(line)
 
+            playerArgs = f" --no-resume-playback {playerArgs}"
+
         subprocess.Popen(
-            self.executable + " --playlist=" + self.playlistFile,
+            f"{self.executable}{playerArgs}",
             creationflags=subprocess.CREATE_BREAKAWAY_FROM_JOB
         )
         self._view.close()
