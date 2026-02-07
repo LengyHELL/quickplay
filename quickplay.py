@@ -1,33 +1,33 @@
 """Calculator app demo"""
 
-import sys
 import os
 import re
-from functools import partial
-from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, SUPPRESS
 import subprocess
+import sys
+from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser
+from functools import partial
 
-from PyQt6.QtWidgets import (
-    QApplication,
-    QWidget,
-    QMainWindow,
-    QVBoxLayout,
-    QPushButton,
-    QStackedWidget,
-    QLineEdit,
-    QListView,
-    QHBoxLayout,
-    QScrollBar,
-)
 from PyQt6.QtCore import QStringListModel
 from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import (
+    QApplication,
+    QHBoxLayout,
+    QLineEdit,
+    QListView,
+    QMainWindow,
+    QPushButton,
+    QScrollBar,
+    QStackedWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
 WINDOW_MIN_WIDTH = 600
 WINDOW_MIN_HEIGHT = 400
 
 
 class QuickplayView(QMainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Quickplay")
         self.setMinimumSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
@@ -42,8 +42,9 @@ class QuickplayView(QMainWindow):
 
         self.setCentralWidget(self.stackedWidget)
 
+
 class TitleSelect(QWidget):
-    def __init__(self, parent: QuickplayView):
+    def __init__(self, parent: QuickplayView) -> None:
         super().__init__(parent)
 
         self.titleSelectLayout = QVBoxLayout()
@@ -53,12 +54,12 @@ class TitleSelect(QWidget):
         self._createTitleList()
         self._createButtons()
 
-    def _createSearch(self):
+    def _createSearch(self) -> None:
         self.search = QLineEdit()
         self.search.setPlaceholderText("Search")
         self.titleSelectLayout.addWidget(self.search)
 
-    def _createTitleList(self):
+    def _createTitleList(self) -> None:
         self.listModel = QStringListModel()
         self.scrollBar = QScrollBar()
         self.list = QListView()
@@ -67,7 +68,7 @@ class TitleSelect(QWidget):
         self.list.setModel(self.listModel)
         self.titleSelectLayout.addWidget(self.list)
 
-    def _createButtons(self):
+    def _createButtons(self) -> None:
         self.buttonLayout = QHBoxLayout()
         self.startPrevious = QPushButton("Start previous")
         self.next = QPushButton("Next")
@@ -77,7 +78,7 @@ class TitleSelect(QWidget):
 
 
 class EpisodeSelect(QWidget):
-    def __init__(self, parent: QuickplayView):
+    def __init__(self, parent: QuickplayView) -> None:
         super().__init__(parent)
 
         self.episodeSelectLayout = QVBoxLayout()
@@ -87,12 +88,12 @@ class EpisodeSelect(QWidget):
         self._createEpisodeList()
         self._createButtons()
 
-    def _createSearch(self):
+    def _createSearch(self) -> None:
         self.search = QLineEdit()
         self.search.setPlaceholderText("Search")
         self.episodeSelectLayout.addWidget(self.search)
 
-    def _createEpisodeList(self):
+    def _createEpisodeList(self) -> None:
         self.listModel = QStringListModel()
         self.scrollBar = QScrollBar()
         self.list = QListView()
@@ -102,7 +103,7 @@ class EpisodeSelect(QWidget):
         self.list.setModel(self.listModel)
         self.episodeSelectLayout.addWidget(self.list)
 
-    def _createButtons(self):
+    def _createButtons(self) -> None:
         self.buttonLayout = QHBoxLayout()
         self.back = QPushButton("Back")
         self.startAll = QPushButton("Start All")
@@ -112,8 +113,9 @@ class EpisodeSelect(QWidget):
         self.buttonLayout.addWidget(self.start)
         self.episodeSelectLayout.addLayout(self.buttonLayout)
 
+
 class QuickplayModel:
-    def parseArguments(self):
+    def parseArguments(self) -> None:
         parser = ArgumentParser(
             add_help=False,
             formatter_class=ArgumentDefaultsHelpFormatter,
@@ -163,7 +165,7 @@ class QuickplayModel:
 
 
 class QuickplayController:
-    def __init__(self, model: QuickplayModel, view: QuickplayView):
+    def __init__(self, model: QuickplayModel, view: QuickplayView) -> None:
         self._model = model
         self._view = view
         self._episodeList: list[str] = []
@@ -176,44 +178,39 @@ class QuickplayController:
         self._setTitleSelectDisable()
         self._setEpisodeSelectDisable()
 
-    def _parseArguments(self):
+    def _parseArguments(self) -> None:
         args = self._model.parseArguments()
         self.executable: str = args.executable
         self.folderFile: str = args.folderFile
         self.playlistFile: str = args.playlistFile
         self.extensions: list[str] = re.sub(r"\s", "", args.extensions).split(",")
 
-    def _selectPage(self, index):
+    def _selectPage(self, index: int) -> None:
         self._view.stackedWidget.setCurrentIndex(index)
 
-    def _connectInputs(self):
+    def _connectInputs(self) -> None:
         self._view.titleSelect.search.textChanged.connect(self._filterTitles)
         self._view.titleSelect.next.clicked.connect(self._goToEpisodes)
         self._view.titleSelect.startPrevious.clicked.connect(partial(self._openPlayer, []))
         self._view.titleSelect.list.doubleClicked.connect(self._goToEpisodes)
-        self._view.titleSelect.list.selectionModel().selectionChanged.connect(
-            self._setTitleSelectDisable
-        )
+        self._view.titleSelect.list.selectionModel().selectionChanged.connect(self._setTitleSelectDisable)
 
         self._view.episodeSelect.search.textChanged.connect(self._filterEpisodes)
         self._view.episodeSelect.back.clicked.connect(partial(self._selectPage, 0))
         self._view.episodeSelect.startAll.clicked.connect(self._startAllEpisodes)
         self._view.episodeSelect.start.clicked.connect(self._startSelectedEpisodes)
         self._view.episodeSelect.list.doubleClicked.connect(self._startSelectedEpisodes)
-        self._view.episodeSelect.list.selectionModel().selectionChanged.connect(
-            self._setEpisodeSelectDisable
-        )
+        self._view.episodeSelect.list.selectionModel().selectionChanged.connect(self._setEpisodeSelectDisable)
 
-    def _setTitleSelectDisable(self):
-        disabled =  len(self._view.titleSelect.list.selectedIndexes()) <= 0
+    def _setTitleSelectDisable(self) -> None:
+        disabled = len(self._view.titleSelect.list.selectedIndexes()) <= 0
         self._view.titleSelect.next.setDisabled(disabled)
 
-    def _setEpisodeSelectDisable(self):
-        disabled =  len(self._view.episodeSelect.list.selectedIndexes()) <= 0
+    def _setEpisodeSelectDisable(self) -> None:
+        disabled = len(self._view.episodeSelect.list.selectedIndexes()) <= 0
         self._view.episodeSelect.start.setDisabled(disabled)
 
-
-    def _readTitles(self):
+    def _readTitles(self) -> None:
         self.titleList: list[tuple[str, str]] = []
 
         if not os.path.isfile(self.folderFile):
@@ -230,14 +227,10 @@ class QuickplayController:
                 dirs = os.listdir(f)
                 for d in dirs:
                     path = os.path.join(f, d)
-                    if os.path.isdir(path) and any([
-                        os.path.isfile(os.path.join(path, f)) and
-                        os.path.splitext(os.path.join(path, f))[1] in self.extensions
-                        for f in os.listdir(path)
-                    ]):
+                    if os.path.isdir(path) and any([os.path.isfile(os.path.join(path, f)) and os.path.splitext(os.path.join(path, f))[1] in self.extensions for f in os.listdir(path)]):
                         self.titleList.append((f, d))
 
-    def _filterTitles(self, text = ""):
+    def _filterTitles(self, text: str = "") -> None:
         if not text:
             self.filteredTitles = self.titleList.copy()
         else:
@@ -249,13 +242,13 @@ class QuickplayController:
             )
 
         self._view.titleSelect.list.clearSelection()
-        self._view.titleSelect.listModel.setStringList([l[1] for l in self.filteredTitles])
+        self._view.titleSelect.listModel.setStringList([title[1] for title in self.filteredTitles])
 
-    def _goToEpisodes(self):
+    def _goToEpisodes(self) -> None:
         self._selectPage(1)
         self._readEpisodes()
 
-    def _readEpisodes(self):
+    def _readEpisodes(self) -> None:
         index = self._view.titleSelect.list.selectedIndexes()[0].row()
         base, title = self.filteredTitles[index]
         directory = os.path.join(base, title)
@@ -264,17 +257,14 @@ class QuickplayController:
         if os.path.isdir(directory):
             dirs = os.listdir(directory)
             for d in dirs:
-                if (
-                    os.path.isfile(os.path.join(directory, d))
-                    and os.path.splitext(d)[-1] in self.extensions
-                ):
+                if os.path.isfile(os.path.join(directory, d)) and os.path.splitext(d)[-1] in self.extensions:
                     self._episodeList.append(d)
         else:
             print(f"Failed to find directory '{directory}'!")
 
         self._filterEpisodes()
 
-    def _filterEpisodes(self, text = ""):
+    def _filterEpisodes(self, text: str = "") -> None:
         if not text:
             self.filteredEpisodes = self._episodeList.copy()
         else:
@@ -288,17 +278,17 @@ class QuickplayController:
         self._view.episodeSelect.list.clearSelection()
         self._view.episodeSelect.listModel.setStringList(self.filteredEpisodes)
 
-    def _getEpisodes(self):
+    def _getEpisodes(self) -> None:
         return self._episodeList
 
-    def _startAllEpisodes(self):
+    def _startAllEpisodes(self) -> None:
         self._openPlayer(self._episodeList)
 
-    def _startSelectedEpisodes(self):
+    def _startSelectedEpisodes(self) -> None:
         indexes = [i.row() for i in self._view.episodeSelect.list.selectedIndexes()]
         self._openPlayer([self.filteredEpisodes[i] for i in indexes])
 
-    def _openPlayer(self, episodes):
+    def _openPlayer(self, episodes: list[str]) -> None:
         playerArgs = f" --save-position-on-quit --playlist={self.playlistFile}"
 
         if len(episodes) > 0:
@@ -312,20 +302,19 @@ class QuickplayController:
 
             playerArgs = f" --no-resume-playback {playerArgs}"
 
-        subprocess.Popen(
-            f"{self.executable}{playerArgs}",
-            creationflags=subprocess.CREATE_BREAKAWAY_FROM_JOB
-        )
+        subprocess.Popen(f"{self.executable}{playerArgs}", creationflags=subprocess.CREATE_BREAKAWAY_FROM_JOB)
         self._view.close()
 
-def getStyleSheet(path):
+
+def getStyleSheet(path: str) -> None:
     content = ""
     with open(path, "r", encoding="utf-8") as styles:
         content = styles.read()
 
     return content
 
-def main():
+
+def main() -> None:
     app = QApplication(sys.argv)
     app.setStyleSheet(getStyleSheet("_internal/styles.qss"))
 

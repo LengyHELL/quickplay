@@ -1,0 +1,15 @@
+[tool.ruff]
+line-length = 200
+target-version = "py311"
+
+select = ["F", "E", "W", "PL", "B", "I", "ANN"]
+
+ignore = [
+    "PLR2004", # Magic variables
+]
+
+[tool.ruff.per-file-ignores]
+"*.spec" = [
+    "F821", # undefined name
+    "F841", # assigned but unused
+]
