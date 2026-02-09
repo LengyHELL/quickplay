@@ -7,8 +7,9 @@ import sys
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser
 from functools import partial
 
-from PyQt6.QtCore import QStringListModel
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import QModelIndex, QSize, QStringListModel, Qt
+from PyQt6.QtGui import QIcon, QPainter, QPalette, QPixmap, QStandardItem, QStandardItemModel
+from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -18,6 +19,9 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QScrollBar,
     QStackedWidget,
+    QStyle,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
     QVBoxLayout,
     QWidget,
 )
@@ -77,6 +81,51 @@ class TitleSelect(QWidget):
         self.titleSelectLayout.addLayout(self.buttonLayout)
 
 
+class EpisodeItemDelegate(QStyledItemDelegate):
+    def __init__(self, parent: QListView) -> None:
+        super().__init__(parent)
+        self.icon_size = 16
+        self.icon_spacing = 4
+
+    def paint(self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        painter.save()
+
+        style = QApplication.style()
+        option.decorationSize = QSize(0, 0)
+        style.drawControl(QStyle.ControlElement.CE_ItemViewItem, option, painter, None)
+
+        textColor = option.palette.text()
+
+        if option.state & QStyle.StateFlag.State_Selected:
+            textColor = option.palette.highlightedText()
+
+            accentColor = option.palette.color(QPalette.ColorRole.Accent)
+            focusHMargin = style.pixelMetric(QStyle.PixelMetric.PM_FocusFrameHMargin)
+            indicatorWidth = style.pixelMetric(QStyle.PixelMetric.PM_DefaultFrameWidth)
+            indicatorHeight = style.pixelMetric(QStyle.PixelMetric.PM_IndicatorHeight)
+            vOffset = (option.rect.height() - indicatorHeight) // 2
+            indicatorRect = option.rect.adjusted(focusHMargin, vOffset, -option.rect.width() + focusHMargin + indicatorWidth, -vOffset)
+            painter.fillRect(indicatorRect, accentColor)
+
+        text_offset = self.icon_size + self.icon_spacing * 2
+        option.rect = option.rect.adjusted(text_offset, 0, 0, 0)
+
+        text = index.data(Qt.ItemDataRole.DisplayRole)
+        painter.setPen(textColor.color())
+        painter.drawText(option.rect, Qt.AlignmentFlag.AlignVCenter, text)
+
+        painter.restore()
+
+        icon: QIcon = index.data(Qt.ItemDataRole.DecorationRole)
+        if icon:
+            icon_x = option.rect.left() - text_offset + self.icon_spacing
+            icon_y = option.rect.top() + (option.rect.height() - self.icon_size) // 2
+            painter.drawPixmap(icon_x, icon_y, self.icon_size, self.icon_size, icon.pixmap(self.icon_size, self.icon_size))
+
+    def sizeHint(self, option: QStyleOptionViewItem, index: int) -> QSize:
+        return super().sizeHint(option, index)
+
+
 class EpisodeSelect(QWidget):
     def __init__(self, parent: QuickplayView) -> None:
         super().__init__(parent)
@@ -94,13 +143,14 @@ class EpisodeSelect(QWidget):
         self.episodeSelectLayout.addWidget(self.search)
 
     def _createEpisodeList(self) -> None:
-        self.listModel = QStringListModel()
+        self.listModel = QStandardItemModel()
         self.scrollBar = QScrollBar()
         self.list = QListView()
         self.list.setEditTriggers(QListView.EditTrigger.NoEditTriggers)
         self.list.setSelectionMode(QListView.SelectionMode.ExtendedSelection)
         self.list.setVerticalScrollBar(self.scrollBar)
         self.list.setModel(self.listModel)
+        self.list.setItemDelegate(EpisodeItemDelegate(self.list))
         self.episodeSelectLayout.addWidget(self.list)
 
     def _createButtons(self) -> None:
@@ -276,7 +326,10 @@ class QuickplayController:
             )
 
         self._view.episodeSelect.list.clearSelection()
-        self._view.episodeSelect.listModel.setStringList(self.filteredEpisodes)
+        for index, episode in enumerate(self.filteredEpisodes):
+            icon = svg_icon("check", QPalette.ColorRole.Text)
+            item = QStandardItem(icon, episode) if index % 2 == 0 else QStandardItem(episode)
+            self._view.episodeSelect.listModel.appendRow(item)
 
     def _getEpisodes(self) -> None:
         return self._episodeList
@@ -312,6 +365,21 @@ def getStyleSheet(path: str) -> None:
         content = styles.read()
 
     return content
+
+
+def svg_icon(name: str, color: QPalette.ColorRole, size: int = 24) -> QIcon:
+    palette = QPalette()
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+
+    painter = QPainter(pixmap)
+    renderer = QSvgRenderer(f"_internal/icons/{name}.svg")
+    renderer.render(painter)
+    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
+    painter.fillRect(pixmap.rect(), palette.color(color))
+    painter.end()
+
+    return QIcon(pixmap)
 
 
 def main() -> None:

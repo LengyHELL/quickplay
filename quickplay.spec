@@ -12,6 +12,7 @@ a = Analysis(
         ("./_internal/icon.ico", "."),
         ("./_internal/icon.png", "."),
         ("./_internal/styles.qss", "."),
+        ("./_internal/icons", "icons"),
     ],
     hiddenimports=[],
     hookspath=[],

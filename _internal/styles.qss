@@ -5,3 +5,7 @@ QLineEdit {
 QPushButton {
     height: 24px;
 }
+
+QListView::item {
+    height: 32px;
+}
