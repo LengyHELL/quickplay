@@ -3,8 +3,8 @@
 
 
 a = Analysis(
-    ["quickplay.py"],
-    pathex=[],
+    ["src/quickplay.py"],
+    pathex=["./src"],
     binaries=[],
     datas=[
         ("./_internal/folders.txt", "."),

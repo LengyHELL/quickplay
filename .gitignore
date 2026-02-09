@@ -4,3 +4,4 @@ build
 dist
 _internal/folders.txt
 _internal/quickplay.txt
+__pycache__
