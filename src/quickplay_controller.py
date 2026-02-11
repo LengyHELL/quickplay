@@ -1,6 +1,5 @@
 import os
 import re
-import subprocess
 from functools import partial
 
 from PyQt6.QtGui import QPalette, QStandardItem
@@ -24,10 +23,10 @@ class QuickplayController:
         self._setTitleSelectDisable()
         self._setEpisodeSelectDisable()
         self._observePlayerFullscreen()
+        self._observePlayerQuit()
 
     def _parseArguments(self) -> None:
         args = self._model.parseArguments()
-        self.executable: str = args.executable
         self.folderFile: str = args.folderFile
         self.playlistFile: str = args.playlistFile
         self.extensions: list[str] = re.sub(r"\s", "", args.extensions).split(",")
@@ -59,7 +58,7 @@ class QuickplayController:
         disabled = len(self._view.episodeSelect.list.selectedIndexes()) <= 0
         self._view.episodeSelect.start.setDisabled(disabled)
 
-    def _handleFullscreen(self, _: str, fullscreen: bool) -> None:
+    def _handleFullscreen(self, fullscreen: bool) -> None:
         if fullscreen:
             self._view.showFullScreen()
             self._view.videoPlayer.buttonFrame.hide()
@@ -70,7 +69,10 @@ class QuickplayController:
             self._view.videoPlayer.videoPlayerLayout.unsetContentsMargins()
 
     def _observePlayerFullscreen(self) -> None:
-        self._view.videoPlayer.player.observe_property("fullscreen", self._handleFullscreen)
+        self._view.videoPlayer.player.isFullscreen.connect(self._handleFullscreen)
+
+    def _observePlayerQuit(self) -> None:
+        self._view.videoPlayer.player.quitEvent.connect(self._stopPlayback)
 
     def _readTitles(self) -> None:
         self.titleList: list[tuple[str, str]] = []
@@ -162,26 +164,9 @@ class QuickplayController:
 
             self._view.videoPlayer.player.loadEpisodes(paths)
             self._selectPage(2)
-            self._view.videoPlayer.player.startPlaylist()
+            self._view.videoPlayer.player.start(0)
 
     def _stopPlayback(self) -> None:
         self._view.videoPlayer.player.stop()
-        self._handleFullscreen(None, False)
+        self._handleFullscreen(False)
         self._goToEpisodes()
-
-    def _openPlayerSubprocess(self, episodes: list[str]) -> None:
-        playerArgs = f" --save-position-on-quit --playlist={self.playlistFile}"
-
-        if len(episodes) > 0:
-            with open(self.playlistFile, "w", encoding="utf-8") as file:
-                index = self._view.titleSelect.list.selectedIndexes()[0].row()
-                base, title = self.filteredTitles[index]
-
-                for episode in episodes:
-                    line = os.path.join(base, title, episode) + "\n"
-                    file.write(line)
-
-            playerArgs = f" --no-resume-playback {playerArgs}"
-
-        subprocess.Popen(f"{self.executable}{playerArgs}", creationflags=subprocess.CREATE_BREAKAWAY_FROM_JOB)
-        self._view.close()

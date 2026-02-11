@@ -15,14 +15,6 @@ class QuickplayModel:
             help="Show this help message.",
         )
         parser.add_argument(
-            "-e",
-            "--executable",
-            dest="executable",
-            default="mpv",
-            help="MPV executable location.",
-            metavar="PATH",
-        )
-        parser.add_argument(
             "-f",
             "--folder",
             dest="folderFile",
@@ -43,8 +35,7 @@ class QuickplayModel:
             "--extensions",
             dest="extensions",
             default=".mkv, .mp4",
-            help='The extensions to include when searching the directories. \
-                (eg.: ".mkv, .mp4, .mov")',
+            help='The extensions to include when searching the directories. (eg.: ".mkv, .mp4, .mov")',
             metavar="LIST",
         )
 

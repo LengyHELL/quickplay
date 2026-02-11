@@ -8,8 +8,8 @@ from episode_select import EpisodeSelect
 from title_select import TitleSelect
 from video_player import VideoPlayer
 
-WINDOW_MIN_WIDTH = 600
-WINDOW_MIN_HEIGHT = 400
+WINDOW_MIN_WIDTH = 800
+WINDOW_MIN_HEIGHT = 600
 
 
 class QuickplayView(QMainWindow):
