@@ -16,11 +16,7 @@ class EpisodeItemDelegate(QStyledItemDelegate):
         option.decorationSize = QSize(0, 0)
         style.drawControl(QStyle.ControlElement.CE_ItemViewItem, option, painter, None)
 
-        textColor = option.palette.text()
-
         if option.state & QStyle.StateFlag.State_Selected:
-            textColor = option.palette.highlightedText()
-
             accentColor = option.palette.color(QPalette.ColorRole.Accent)
             focusHMargin = style.pixelMetric(QStyle.PixelMetric.PM_FocusFrameHMargin)
             indicatorWidth = style.pixelMetric(QStyle.PixelMetric.PM_DefaultFrameWidth)
@@ -33,7 +29,7 @@ class EpisodeItemDelegate(QStyledItemDelegate):
         option.rect = option.rect.adjusted(text_offset, 0, 0, 0)
 
         text = index.data(Qt.ItemDataRole.DisplayRole)
-        painter.setPen(textColor.color())
+        painter.setPen(option.palette.text().color())
         painter.drawText(option.rect, Qt.AlignmentFlag.AlignVCenter, text)
 
         painter.restore()

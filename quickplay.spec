@@ -13,6 +13,8 @@ a = Analysis(
         ("./_internal/icon.png", "."),
         ("./_internal/styles.qss", "."),
         ("./_internal/icons", "icons"),
+        ("./_internal/icons", "icons"),
+        ("./_internal/libmpv-2.dll", "."),
     ],
     hiddenimports=[],
     hookspath=[],

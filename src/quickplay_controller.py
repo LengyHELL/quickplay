@@ -23,6 +23,7 @@ class QuickplayController:
         self._connectInputs()
         self._setTitleSelectDisable()
         self._setEpisodeSelectDisable()
+        self._observePlayerFullscreen()
 
     def _parseArguments(self) -> None:
         args = self._model.parseArguments()
@@ -37,7 +38,7 @@ class QuickplayController:
     def _connectInputs(self) -> None:
         self._view.titleSelect.search.textChanged.connect(self._filterTitles)
         self._view.titleSelect.next.clicked.connect(self._goToEpisodes)
-        self._view.titleSelect.startPrevious.clicked.connect(partial(self._openPlayer, []))
+        self._view.titleSelect.startPrevious.clicked.connect(partial(self._goToPlayer, []))
         self._view.titleSelect.list.doubleClicked.connect(self._goToEpisodes)
         self._view.titleSelect.list.selectionModel().selectionChanged.connect(self._setTitleSelectDisable)
 
@@ -48,6 +49,8 @@ class QuickplayController:
         self._view.episodeSelect.list.doubleClicked.connect(self._startSelectedEpisodes)
         self._view.episodeSelect.list.selectionModel().selectionChanged.connect(self._setEpisodeSelectDisable)
 
+        self._view.videoPlayer.back.clicked.connect(self._stopPlayback)
+
     def _setTitleSelectDisable(self) -> None:
         disabled = len(self._view.titleSelect.list.selectedIndexes()) <= 0
         self._view.titleSelect.next.setDisabled(disabled)
@@ -55,6 +58,19 @@ class QuickplayController:
     def _setEpisodeSelectDisable(self) -> None:
         disabled = len(self._view.episodeSelect.list.selectedIndexes()) <= 0
         self._view.episodeSelect.start.setDisabled(disabled)
+
+    def _handleFullscreen(self, _: str, fullscreen: bool) -> None:
+        if fullscreen:
+            self._view.showFullScreen()
+            self._view.videoPlayer.buttonFrame.hide()
+            self._view.videoPlayer.videoPlayerLayout.setContentsMargins(0, 0, 0, 0)
+        else:
+            self._view.showNormal()
+            self._view.videoPlayer.buttonFrame.show()
+            self._view.videoPlayer.videoPlayerLayout.unsetContentsMargins()
+
+    def _observePlayerFullscreen(self) -> None:
+        self._view.videoPlayer.player.observe_property("fullscreen", self._handleFullscreen)
 
     def _readTitles(self) -> None:
         self.titleList: list[tuple[str, str]] = []
@@ -122,6 +138,7 @@ class QuickplayController:
             )
 
         self._view.episodeSelect.list.clearSelection()
+        self._view.episodeSelect.listModel.clear()
         for index, episode in enumerate(self.filteredEpisodes):
             icon = QuickPlayUtil.icon("check", QPalette.ColorRole.Text)
             item = QStandardItem(icon, episode) if index % 2 == 0 else QStandardItem(episode)
@@ -131,13 +148,28 @@ class QuickplayController:
         return self._episodeList
 
     def _startAllEpisodes(self) -> None:
-        self._openPlayer(self._episodeList)
+        self._goToPlayer(self._episodeList)
 
     def _startSelectedEpisodes(self) -> None:
         indexes = [i.row() for i in self._view.episodeSelect.list.selectedIndexes()]
-        self._openPlayer([self.filteredEpisodes[i] for i in indexes])
+        self._goToPlayer([self.filteredEpisodes[i] for i in indexes])
 
-    def _openPlayer(self, episodes: list[str]) -> None:
+    def _goToPlayer(self, episodes: list[str]) -> None:
+        if episodes:
+            index = self._view.titleSelect.list.selectedIndexes()[0].row()
+            base, title = self.filteredTitles[index]
+            paths = [os.path.join(base, title, episode) for episode in episodes]
+
+            self._view.videoPlayer.player.loadEpisodes(paths)
+            self._selectPage(2)
+            self._view.videoPlayer.player.startPlaylist()
+
+    def _stopPlayback(self) -> None:
+        self._view.videoPlayer.player.stop()
+        self._handleFullscreen(None, False)
+        self._goToEpisodes()
+
+    def _openPlayerSubprocess(self, episodes: list[str]) -> None:
         playerArgs = f" --save-position-on-quit --playlist={self.playlistFile}"
 
         if len(episodes) > 0:

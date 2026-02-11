@@ -1,3 +1,4 @@
+import locale
 import sys
 
 from PyQt6.QtWidgets import (
@@ -11,6 +12,8 @@ from quickplay_view import QuickplayView
 
 
 def main() -> None:
+    locale.setlocale(locale.LC_NUMERIC, "C")
+
     app = QApplication(sys.argv)
     app.setStyleSheet(QuickPlayUtil.getStyleSheet("_internal/styles.qss"))
 
