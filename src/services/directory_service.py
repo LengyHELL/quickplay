@@ -1,45 +1,49 @@
 import os
 
 from models.episode import Episode
+from models.title import Title
 
 
 class DirectoryService:
-    def scanTitles(self, folderFile: str, extensions: list[str]) -> list[tuple[str, str]]:
-        titles: list[tuple[str, str]] = []
+    def scanTitles(self, folderFile: str, extensions: list[str]) -> list[Title]:
+        titles: list[Title] = []
 
         if not os.path.isfile(folderFile):
             print(f"Failed to open folder file '{folderFile}'!")
             return titles
 
         with open(folderFile, "r", encoding="utf-8") as file:
-            folders = [f.strip() for f in file.readlines()]
-            for f in folders:
-                if not os.path.isdir(f):
-                    print(f"Failed to find directory '{f}'!")
+            folders = [folder.strip() for folder in file.readlines()]
+
+            for folder in folders:
+                if not os.path.isdir(folder):
+                    print(f"Failed to find directory '{folder}'!")
                     continue
 
-                dirs = os.listdir(f)
-                for d in dirs:
-                    path = os.path.join(f, d)
+                directories = os.listdir(folder)
+
+                for directory in directories:
+                    path = os.path.join(folder, directory)
+
                     if os.path.isdir(path) and any(
                         os.path.isfile(os.path.join(path, entry)) and os.path.splitext(entry)[1] in extensions
                         for entry in os.listdir(path)
                     ):
-                        titles.append((f, d))
+                        titles.append(Title(directory, folder))
 
         return titles
 
-    def scanEpisodes(self, base: str, title: str, extensions: list[str]) -> list[Episode]:
+    def scanEpisodes(self, title: Title, extensions: list[str]) -> list[Episode]:
         episodes: list[Episode] = []
-        directory = os.path.join(base, title)
+        path = os.path.join(title.base, title.name)
 
-        if not os.path.isdir(directory):
-            print(f"Failed to find directory '{directory}'!")
+        if not os.path.isdir(path):
+            print(f"Failed to find directory '{path}'!")
             return episodes
 
-        dirs = os.listdir(directory)
-        for d in dirs:
-            if os.path.isfile(os.path.join(directory, d)) and os.path.splitext(d)[-1] in extensions:
-                episodes.append(Episode(d, os.path.join(directory, d), 0.0, False))
+        directories = os.listdir(path)
+        for directory in directories:
+            if os.path.isfile(os.path.join(path, directory)) and os.path.splitext(directory)[-1] in extensions:
+                episodes.append(Episode(directory, os.path.join(path, directory), path, 0.0, False))
 
         return episodes

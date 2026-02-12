@@ -2,11 +2,13 @@ from PyQt6.QtCore import QSortFilterProxyModel, Qt, pyqtSignal
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QListView, QPushButton, QScrollBar, QVBoxLayout, QWidget
 
-BASE_PATH_ROLE = Qt.ItemDataRole.UserRole + 1
+from models.title import Title
+
+TITLE_VALUE_ROLE = Qt.ItemDataRole.UserRole + 1
 
 
 class TitleSelect(QWidget):
-    titleSelected = pyqtSignal(str, str)
+    titleSelected = pyqtSignal(Title)
     startPreviousClicked = pyqtSignal()
 
     def __init__(self, parent: QWidget) -> None:
@@ -64,15 +66,14 @@ class TitleSelect(QWidget):
 
         source_index = self._proxyModel.mapToSource(indexes[0])
         item = self._sourceModel.item(source_index.row())
-        base = item.data(BASE_PATH_ROLE)
-        name = item.text()
-        self.titleSelected.emit(base, name)
+        title: Title = item.data(TITLE_VALUE_ROLE)
+        self.titleSelected.emit(title)
 
-    def setTitles(self, titles: list[tuple[str, str]]) -> None:
+    def setTitles(self, titles: list[Title]) -> None:
         self._sourceModel.clear()
-        for base, name in titles:
-            item = QStandardItem(name)
-            item.setData(base, BASE_PATH_ROLE)
+        for title in titles:
+            item = QStandardItem(title.name)
+            item.setData(title, TITLE_VALUE_ROLE)
             self._sourceModel.appendRow(item)
 
     def hasSelection(self) -> bool:

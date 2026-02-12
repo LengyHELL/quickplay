@@ -5,4 +5,5 @@ from dataclasses import dataclass
 class AppConfig:
     folderFile: str
     playlistFile: str
+    statusFile: str
     extensions: list[str]

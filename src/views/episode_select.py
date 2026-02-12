@@ -15,13 +15,13 @@ from PyQt6.QtWidgets import (
 )
 
 from models.episode import Episode
-from utils import icon as make_icon
+from utils import makeIcon
 
 
 class EpisodeItemDelegate(QStyledItemDelegate):
     def __init__(self, parent: QListView) -> None:
         super().__init__(parent)
-        self.iconSize = 16
+        self.iconSize = 12
         self.iconSpacing = 4
 
     def paint(self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex) -> None:
@@ -137,7 +137,10 @@ class EpisodeSelect(QWidget):
         self._episodes = episodes
         self._sourceModel.clear()
         self._search.clear()
+        unseen = makeIcon("circle", QPalette.ColorRole.PlaceholderText)
+        inProgress = makeIcon("clock", QPalette.ColorRole.Text)
+        completed = makeIcon("check-circle", QPalette.ColorRole.BrightText)
         for episode in episodes:
-            check_icon = make_icon("check", QPalette.ColorRole.Text)
-            item = QStandardItem(check_icon, episode.name) if episode.completed else QStandardItem(episode.name)
+            icon = completed if episode.completed else inProgress if episode.progress > 0 else unseen
+            item = QStandardItem(icon, episode.name)
             self._sourceModel.appendRow(item)

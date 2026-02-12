@@ -5,6 +5,7 @@ from dataclasses import dataclass
 class Episode:
     name: str
     path: str
+    base: str
     progress: float
     completed: bool
 

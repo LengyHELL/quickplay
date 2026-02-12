@@ -1,9 +1,13 @@
+import os
+
 from PyQt6.QtWidgets import QApplication
 
 from models.app_config import AppConfig
 from models.episode import Episode, EpisodeConfig
 from models.page import Page
+from models.title import Title
 from services.directory_service import DirectoryService
+from services.episode_service import EpisodeService
 from services.playlist_service import PlaylistService
 from views.main_window import MainWindow
 
@@ -13,15 +17,17 @@ class QuickplayController:
         self,
         config: AppConfig,
         view: MainWindow,
-        directory_service: DirectoryService,
-        playlist_service: PlaylistService,
+        directoryService: DirectoryService,
+        playlistService: PlaylistService,
+        episodeService: EpisodeService,
     ) -> None:
         self._config = config
         self._view = view
-        self._directory_service = directory_service
-        self._playlist_service = playlist_service
+        self._directoryService = directoryService
+        self._playlistService = playlistService
+        self._episodeService = episodeService
 
-        titles = self._directory_service.scanTitles(config.folderFile, config.extensions)
+        titles = self._directoryService.scanTitles(config.folderFile, config.extensions)
         self._view.titleSelect.setTitles(titles)
 
         self._connectSignals()
@@ -36,18 +42,25 @@ class QuickplayController:
         self._view.playerPage.player.isFullscreen.connect(self._onFullscreen)
         QApplication.instance().aboutToQuit.connect(self._saveConfig)
 
-    def _onTitleSelected(self, base: str, name: str) -> None:
-        episodes = self._directory_service.scanEpisodes(base, name, self._config.extensions)
+    def _onTitleSelected(self, title: Title) -> None:
+        episodes = self._directoryService.scanEpisodes(title, self._config.extensions)
+
+        statusFilePath = os.path.join(title.base, title.name, self._config.statusFile)
+        if os.path.isfile(statusFilePath):
+            statusEpisodes = self._episodeService.load(statusFilePath)
+            episodes = self._episodeService.matchEpisodes(episodes, statusEpisodes)
+        self._episodeService.save(statusFilePath, episodes)
+
         self._view.episodeSelect.setEpisodes(episodes)
         self._view.setPage(Page.EPISODES)
 
     def _onStartPrevious(self) -> None:
-        config = self._playlist_service.load(self._config.playlistFile)
+        config = self._playlistService.load(self._config.playlistFile)
         self._startPlayback(config)
 
     def _onEpisodesSelected(self, episodes: list[Episode]) -> None:
         config = EpisodeConfig(0, episodes)
-        self._playlist_service.save(self._config.playlistFile, config)
+        self._playlistService.save(self._config.playlistFile, config)
         self._startPlayback(config)
 
     def _startPlayback(self, config: EpisodeConfig) -> None:
@@ -76,4 +89,16 @@ class QuickplayController:
         self._view.setPage(Page.TITLES)
 
     def _saveConfig(self) -> None:
-        self._playlist_service.save(self._config.playlistFile, self._view.playerPage.player.episodeConfig)
+        try:
+            episodeConfig = self._view.playerPage.player.episodeConfig
+            self._playlistService.save(self._config.playlistFile, episodeConfig)
+
+            episodes = episodeConfig.episodes
+            statusFilePath = os.path.join(episodes[0].base, self._config.statusFile)
+            if os.path.isfile(statusFilePath):
+                statusEpisodes = self._episodeService.load(statusFilePath)
+                episodes = self._episodeService.matchEpisodes(statusEpisodes, episodes)
+            self._episodeService.save(statusFilePath, episodes)
+            self._view.episodeSelect.setEpisodes(episodes)
+        except AttributeError:
+            print("Skipping config save.")

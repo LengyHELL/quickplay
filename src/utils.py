@@ -37,6 +37,14 @@ def parseArguments() -> AppConfig:
         metavar="FILE",
     )
     parser.add_argument(
+        "-s",
+        "--status",
+        dest="statusFile",
+        default="quickplay.json",
+        help="The status config text file generated for each folder to store status information.",
+        metavar="FILE",
+    )
+    parser.add_argument(
         "-x",
         "--extensions",
         dest="extensions",
@@ -47,7 +55,7 @@ def parseArguments() -> AppConfig:
 
     args = parser.parse_args()
     extensions = re.sub(r"\s", "", args.extensions).split(",")
-    return AppConfig(args.folderFile, args.playlistFile, extensions)
+    return AppConfig(args.folderFile, args.playlistFile, args.statusFile, extensions)
 
 
 def getStylesheet(path: str) -> str:
@@ -55,7 +63,7 @@ def getStylesheet(path: str) -> str:
         return styles.read()
 
 
-def icon(name: str, color: QPalette.ColorRole, size: int = 24) -> QIcon:
+def makeIcon(name: str, color: QPalette.ColorRole, size: int = 24) -> QIcon:
     palette = QPalette()
     pixmap = QPixmap(size, size)
     pixmap.fill(Qt.GlobalColor.transparent)
