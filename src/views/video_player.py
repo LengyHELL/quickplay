@@ -6,10 +6,10 @@ os.environ["PATH"] = os.path.dirname("./_internal/libmpv-2.dll") + os.pathsep + 
 import mpv
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QWidget
 
 
-class Player(QWidget):
+class VideoPlayer(QWidget):
     isFullscreen = pyqtSignal(bool)
     quitEvent = pyqtSignal()
 
@@ -224,39 +224,3 @@ class Player(QWidget):
             self.player.keypress(prefix + "MOUSE_BTN4")
         elif event.angleDelta().y() > 0:
             self.player.keypress(prefix + "MOUSE_BTN3")
-
-
-class VideoPlayer(QWidget):
-    stopRequested = pyqtSignal()
-
-    def __init__(self, parent: QWidget) -> None:
-        super().__init__(parent)
-
-        self._videoPlayerLayout = QVBoxLayout()
-        self.setLayout(self._videoPlayerLayout)
-
-        self._createPlayer()
-        self._createButtons()
-
-    def _createPlayer(self) -> None:
-        self.player = Player()
-        self._videoPlayerLayout.addWidget(self.player)
-
-    def _createButtons(self) -> None:
-        self._buttonFrame = QFrame()
-        buttonLayout = QHBoxLayout()
-        buttonLayout.setVerticalSizeConstraint(QHBoxLayout.SizeConstraint.SetFixedSize)
-        buttonLayout.setContentsMargins(0, 0, 0, 0)
-        back = QPushButton("Back")
-        back.clicked.connect(self.stopRequested)
-        buttonLayout.addWidget(back)
-        self._buttonFrame.setLayout(buttonLayout)
-        self._videoPlayerLayout.addWidget(self._buttonFrame)
-
-    def setControlsVisible(self, visible: bool) -> None:
-        if visible:
-            self._buttonFrame.show()
-            self._videoPlayerLayout.unsetContentsMargins()
-        else:
-            self._buttonFrame.hide()
-            self._videoPlayerLayout.setContentsMargins(0, 0, 0, 0)

@@ -21,7 +21,7 @@ class QuickplayController:
         self._directory_service = directory_service
         self._playlist_service = playlist_service
 
-        titles = self._directory_service.scan_titles(config.folderFile, config.extensions)
+        titles = self._directory_service.scanTitles(config.folderFile, config.extensions)
         self._view.titleSelect.setTitles(titles)
 
         self._connectSignals()
@@ -31,13 +31,13 @@ class QuickplayController:
         self._view.titleSelect.startPreviousClicked.connect(self._onStartPrevious)
         self._view.episodeSelect.backClicked.connect(self._onBackToTitles)
         self._view.episodeSelect.episodesSelected.connect(self._onEpisodesSelected)
-        self._view.videoPlayer.stopRequested.connect(self._onStopPlayback)
-        self._view.videoPlayer.player.quitEvent.connect(self._onStopPlayback)
-        self._view.videoPlayer.player.isFullscreen.connect(self._onFullscreen)
+        self._view.playerPage.stopRequested.connect(self._onStopPlayback)
+        self._view.playerPage.player.quitEvent.connect(self._onStopPlayback)
+        self._view.playerPage.player.isFullscreen.connect(self._onFullscreen)
         QApplication.instance().aboutToQuit.connect(self._saveConfig)
 
     def _onTitleSelected(self, base: str, name: str) -> None:
-        episodes = self._directory_service.scan_episodes(base, name, self._config.extensions)
+        episodes = self._directory_service.scanEpisodes(base, name, self._config.extensions)
         self._view.episodeSelect.setEpisodes(episodes)
         self._view.setPage(Page.EPISODES)
 
@@ -51,12 +51,12 @@ class QuickplayController:
         self._startPlayback(config)
 
     def _startPlayback(self, config: EpisodeConfig) -> None:
-        self._view.videoPlayer.player.loadEpisodes(config)
+        self._view.playerPage.player.loadEpisodes(config)
         self._view.setPage(Page.PLAYER)
-        self._view.videoPlayer.player.start()
+        self._view.playerPage.player.start()
 
     def _onStopPlayback(self) -> None:
-        self._view.videoPlayer.player.stop()
+        self._view.playerPage.player.stop()
         self._saveConfig()
         self._onFullscreen(False)
         if self._view.titleSelect.hasSelection():
@@ -67,13 +67,13 @@ class QuickplayController:
     def _onFullscreen(self, fullscreen: bool) -> None:
         if fullscreen:
             self._view.showFullScreen()
-            self._view.videoPlayer.setControlsVisible(False)
+            self._view.playerPage.setControlsVisible(False)
         else:
             self._view.showNormal()
-            self._view.videoPlayer.setControlsVisible(True)
+            self._view.playerPage.setControlsVisible(True)
 
     def _onBackToTitles(self) -> None:
         self._view.setPage(Page.TITLES)
 
     def _saveConfig(self) -> None:
-        self._playlist_service.save(self._config.playlistFile, self._view.videoPlayer.player.episodeConfig)
+        self._playlist_service.save(self._config.playlistFile, self._view.playerPage.player.episodeConfig)

@@ -4,7 +4,7 @@ from models.episode import Episode
 
 
 class DirectoryService:
-    def scan_titles(self, folderFile: str, extensions: list[str]) -> list[tuple[str, str]]:
+    def scanTitles(self, folderFile: str, extensions: list[str]) -> list[tuple[str, str]]:
         titles: list[tuple[str, str]] = []
 
         if not os.path.isfile(folderFile):
@@ -29,7 +29,7 @@ class DirectoryService:
 
         return titles
 
-    def scan_episodes(self, base: str, title: str, extensions: list[str]) -> list[Episode]:
+    def scanEpisodes(self, base: str, title: str, extensions: list[str]) -> list[Episode]:
         episodes: list[Episode] = []
         directory = os.path.join(base, title)
 
