@@ -5,8 +5,8 @@ from dataclasses import dataclass
 
 @dataclass
 class AppConfig:
-    folder_file: str
-    playlist_file: str
+    folderFile: str
+    playlistFile: str
     extensions: list[str]
 
 

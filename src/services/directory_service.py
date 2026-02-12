@@ -4,14 +4,14 @@ from models.episode import Episode
 
 
 class DirectoryService:
-    def scan_titles(self, folder_file: str, extensions: list[str]) -> list[tuple[str, str]]:
+    def scan_titles(self, folderFile: str, extensions: list[str]) -> list[tuple[str, str]]:
         titles: list[tuple[str, str]] = []
 
-        if not os.path.isfile(folder_file):
-            print(f"Failed to open folder file '{folder_file}'!")
+        if not os.path.isfile(folderFile):
+            print(f"Failed to open folder file '{folderFile}'!")
             return titles
 
-        with open(folder_file, "r", encoding="utf-8") as file:
+        with open(folderFile, "r", encoding="utf-8") as file:
             folders = [f.strip() for f in file.readlines()]
             for f in folders:
                 if not os.path.isdir(f):

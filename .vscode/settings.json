@@ -1,0 +1,22 @@
+{
+    "editor.formatOnSave": true,
+    "editor.trimAutoWhitespace": true,
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.analysis.extraPaths": [
+        "./src"
+    ],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.packageIndexDepths": [
+        {
+            "name": "PyQt6",
+            "depth": 4,
+            "includeAllSymbols": true
+        }
+    ],
+    "editor.codeActionsOnSave": {
+        "source.addMissingImports": "explicit",
+        "source.organizeImports.ruff": "explicit",
+        "source.fixAll.ruff": "explicit"
+    }
+}

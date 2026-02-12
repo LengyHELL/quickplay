@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run PyInstaller",
+            "type": "shell",
+            "command": "\"${command:python.interpreterPath}\"",
+            "args": [
+                "-m",
+                "PyInstaller",
+                "--noconfirm",
+                "quickplay.spec"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}

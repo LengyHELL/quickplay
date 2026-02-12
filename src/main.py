@@ -22,10 +22,10 @@ def main() -> None:
     view = MainWindow()
     view.show()
 
-    directory_service = DirectoryService()
-    playlist_service = PlaylistService()
+    directoryService = DirectoryService()
+    playlistService = PlaylistService()
 
-    _controller = QuickplayController(config, view, directory_service, playlist_service)
+    _controller = QuickplayController(config, view, directoryService, playlistService)
 
     sys.exit(app.exec())
 

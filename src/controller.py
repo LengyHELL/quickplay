@@ -9,13 +9,19 @@ from views.main_window import MainWindow
 
 
 class QuickplayController:
-    def __init__(self, config: AppConfig, view: MainWindow, directory_service: DirectoryService, playlist_service: PlaylistService) -> None:
+    def __init__(
+        self,
+        config: AppConfig,
+        view: MainWindow,
+        directory_service: DirectoryService,
+        playlist_service: PlaylistService,
+    ) -> None:
         self._config = config
         self._view = view
         self._directory_service = directory_service
         self._playlist_service = playlist_service
 
-        titles = self._directory_service.scan_titles(config.folder_file, config.extensions)
+        titles = self._directory_service.scan_titles(config.folderFile, config.extensions)
         self._view.titleSelect.setTitles(titles)
 
         self._connectSignals()
@@ -36,12 +42,12 @@ class QuickplayController:
         self._view.setPage(Page.EPISODES)
 
     def _onStartPrevious(self) -> None:
-        config = self._playlist_service.load(self._config.playlist_file)
+        config = self._playlist_service.load(self._config.playlistFile)
         self._startPlayback(config)
 
     def _onEpisodesSelected(self, episodes: list[Episode]) -> None:
         config = EpisodeConfig(0, episodes)
-        self._playlist_service.save(self._config.playlist_file, config)
+        self._playlist_service.save(self._config.playlistFile, config)
         self._startPlayback(config)
 
     def _startPlayback(self, config: EpisodeConfig) -> None:
@@ -70,4 +76,4 @@ class QuickplayController:
         self._view.setPage(Page.TITLES)
 
     def _saveConfig(self) -> None:
-        self._playlist_service.save(self._config.playlist_file, self._view.videoPlayer.player.episodeConfig)
+        self._playlist_service.save(self._config.playlistFile, self._view.videoPlayer.player.episodeConfig)

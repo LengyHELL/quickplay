@@ -21,8 +21,8 @@ from utils import icon as make_icon
 class EpisodeItemDelegate(QStyledItemDelegate):
     def __init__(self, parent: QListView) -> None:
         super().__init__(parent)
-        self.icon_size = 16
-        self.icon_spacing = 4
+        self.iconSize = 16
+        self.iconSpacing = 4
 
     def paint(self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         painter.save()
@@ -37,10 +37,12 @@ class EpisodeItemDelegate(QStyledItemDelegate):
             indicatorWidth = style.pixelMetric(QStyle.PixelMetric.PM_DefaultFrameWidth)
             indicatorHeight = style.pixelMetric(QStyle.PixelMetric.PM_IndicatorHeight)
             vOffset = (option.rect.height() - indicatorHeight) // 2
-            indicatorRect = option.rect.adjusted(focusHMargin, vOffset, -option.rect.width() + focusHMargin + indicatorWidth, -vOffset)
+            indicatorRect = option.rect.adjusted(
+                focusHMargin, vOffset, -option.rect.width() + focusHMargin + indicatorWidth, -vOffset
+            )
             painter.fillRect(indicatorRect, accentColor)
 
-        text_offset = self.icon_size + self.icon_spacing * 2
+        text_offset = self.iconSize + self.iconSpacing * 2
         option.rect = option.rect.adjusted(text_offset, 0, 0, 0)
 
         text = index.data(Qt.ItemDataRole.DisplayRole)
@@ -51,9 +53,9 @@ class EpisodeItemDelegate(QStyledItemDelegate):
 
         icon: QIcon = index.data(Qt.ItemDataRole.DecorationRole)
         if icon:
-            icon_x = option.rect.left() - text_offset + self.icon_spacing
-            icon_y = option.rect.top() + (option.rect.height() - self.icon_size) // 2
-            painter.drawPixmap(icon_x, icon_y, self.icon_size, self.icon_size, icon.pixmap(self.icon_size, self.icon_size))
+            icon_x = option.rect.left() - text_offset + self.iconSpacing
+            icon_y = option.rect.top() + (option.rect.height() - self.iconSize) // 2
+            painter.drawPixmap(icon_x, icon_y, self.iconSize, self.iconSize, icon.pixmap(self.iconSize, self.iconSize))
 
     def sizeHint(self, option: QStyleOptionViewItem, index: int) -> QSize:
         return super().sizeHint(option, index)

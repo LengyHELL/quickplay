@@ -66,7 +66,14 @@ class Player(QWidget):
         self.loadingEpisodes = False
 
     def _initPlayer(self) -> None:
-        self.player = mpv.MPV(wid=str(int(self.winId())), ytdl=True, input_cursor=True, input_default_bindings=True, input_vo_keyboard=True, osc=True)
+        self.player = mpv.MPV(
+            wid=str(int(self.winId())),
+            ytdl=True,
+            input_cursor=True,
+            input_default_bindings=True,
+            input_vo_keyboard=True,
+            osc=True,
+        )
         self.player.on_key_press("n")(self._nextItem)
         self.player.on_key_press("N")(self._nextChapter)
         self.player.on_key_press("p")(self._previousItem)
