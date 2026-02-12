@@ -3,7 +3,7 @@
 
 
 a = Analysis(
-    ["src/quickplay.py"],
+    ["src/main.py"],
     pathex=["./src"],
     binaries=[],
     datas=[

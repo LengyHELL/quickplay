@@ -1,12 +1,12 @@
 import os
 
-from episode import EpisodeConfig
+from models.episode import EpisodeConfig
 
 os.environ["PATH"] = os.path.dirname("./_internal/libmpv-2.dll") + os.pathsep + os.environ["PATH"]
 import mpv
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QMainWindow, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 
 
 class Player(QWidget):
@@ -139,7 +139,7 @@ class Player(QWidget):
             return
 
         try:
-            if index != 0:
+            if index != 0 and 0 <= index - 1 < len(self.episodeConfig.episodes):
                 self.episodeConfig.episodes[index - 1].progress = 0.0
                 self.episodeConfig.episodes[index - 1].completed = True
 
@@ -220,25 +220,36 @@ class Player(QWidget):
 
 
 class VideoPlayer(QWidget):
-    def __init__(self, parent: QMainWindow) -> None:
+    stopRequested = pyqtSignal()
+
+    def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
 
-        self.videoPlayerLayout = QVBoxLayout()
-        self.setLayout(self.videoPlayerLayout)
+        self._videoPlayerLayout = QVBoxLayout()
+        self.setLayout(self._videoPlayerLayout)
 
         self._createPlayer()
         self._createButtons()
 
     def _createPlayer(self) -> None:
         self.player = Player()
-        self.videoPlayerLayout.addWidget(self.player)
+        self._videoPlayerLayout.addWidget(self.player)
 
     def _createButtons(self) -> None:
-        self.buttonFrame = QFrame()
-        self.buttonLayout = QHBoxLayout()
-        self.buttonLayout.setVerticalSizeConstraint(QHBoxLayout.SizeConstraint.SetFixedSize)
-        self.buttonLayout.setContentsMargins(0, 0, 0, 0)
-        self.back = QPushButton("Back")
-        self.buttonLayout.addWidget(self.back)
-        self.buttonFrame.setLayout(self.buttonLayout)
-        self.videoPlayerLayout.addWidget(self.buttonFrame)
+        self._buttonFrame = QFrame()
+        buttonLayout = QHBoxLayout()
+        buttonLayout.setVerticalSizeConstraint(QHBoxLayout.SizeConstraint.SetFixedSize)
+        buttonLayout.setContentsMargins(0, 0, 0, 0)
+        back = QPushButton("Back")
+        back.clicked.connect(self.stopRequested)
+        buttonLayout.addWidget(back)
+        self._buttonFrame.setLayout(buttonLayout)
+        self._videoPlayerLayout.addWidget(self._buttonFrame)
+
+    def setControlsVisible(self, visible: bool) -> None:
+        if visible:
+            self._buttonFrame.show()
+            self._videoPlayerLayout.unsetContentsMargins()
+        else:
+            self._buttonFrame.hide()
+            self._videoPlayerLayout.setContentsMargins(0, 0, 0, 0)
