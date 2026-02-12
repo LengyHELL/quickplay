@@ -1,5 +1,7 @@
 import os
 
+from episode import EpisodeConfig
+
 os.environ["PATH"] = os.path.dirname("./_internal/libmpv-2.dll") + os.pathsep + os.environ["PATH"]
 import mpv
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
@@ -12,6 +14,8 @@ class Player(QWidget):
     quitEvent = pyqtSignal()
 
     player: mpv.MPV
+    episodeConfig: EpisodeConfig
+    loadingEpisodes: bool
 
     keyboardKeys: dict[Qt.Key, str] = {
         Qt.Key.Key_Escape: "ESC",
@@ -59,10 +63,7 @@ class Player(QWidget):
         self.setMouseTracking(True)
         self._initCursorTimer()
         self._initPlayer()
-
-    def __del__(self) -> None:
-        print("Video player destroyed.")
-        super().__del__(self)
+        self.loadingEpisodes = False
 
     def _initPlayer(self) -> None:
         self.player = mpv.MPV(wid=str(int(self.winId())), ytdl=True, input_cursor=True, input_default_bindings=True, input_vo_keyboard=True, osc=True)
@@ -71,10 +72,12 @@ class Player(QWidget):
         self.player.on_key_press("p")(self._previousItem)
         self.player.on_key_press("P")(self._previousChapter)
         self.player.on_key_press("Ctrl+l")(self._showList)
-        for key in ("q", "Q", "POWER", "STOP", "CLOSE_WIN"):
+        for key in ("q", "Q", "POWER", "STOP"):
             self.player.on_key_press(key)(self.quitEvent.emit)
         self.player.observe_property("fullscreen", lambda _, value: self.isFullscreen.emit(value))
-        self.player.observe_property("idle-active", lambda _, value: value and self.quitEvent.emit())
+        self.player.observe_property("playlist-pos", lambda _, value: self._updateEpisodeConfig(value))
+        self.player.observe_property("time-pos", lambda _, value: self._updateProgress(value))
+        self.player.event_callback("file-loaded")(lambda _: self._syncTimePos())
 
     def _initCursorTimer(self) -> None:
         self.cursorTimer = QTimer(self)
@@ -130,18 +133,47 @@ class Player(QWidget):
             prefix = self._modifierPrefix(event.modifiers())
             self.player.command("keyup" if release else "keydown", prefix + button)
 
-    def loadEpisodes(self, episodes: list[str]) -> None:
+    def _updateEpisodeConfig(self, index: int) -> None:
+        if self.loadingEpisodes:
+            self.loadingEpisodes = False
+            return
+
+        try:
+            if index != 0:
+                self.episodeConfig.episodes[index - 1].progress = 0.0
+                self.episodeConfig.episodes[index - 1].completed = True
+
+            if index == -1:
+                self.episodeConfig.episodes[index].progress = 0.0
+                self.episodeConfig.episodes[index].completed = True
+                self.quitEvent.emit()
+            else:
+                self.episodeConfig.index = index
+
+        except AttributeError:
+            print("No episode config.")
+
+    def _updateProgress(self, progress: float) -> None:
+        if progress is not None:
+            self.episodeConfig.episodes[self.episodeConfig.index].progress = progress
+
+    def _syncTimePos(self) -> None:
+        self.player.time_pos = self.episodeConfig.currentEpisode().progress
+
+    def loadEpisodes(self, config: EpisodeConfig) -> None:
+        self.loadingEpisodes = True
         self.player.keypress("ESC")
         self.player.stop()
         self.player.playlist_clear()
 
-        for episode in episodes:
-            self.player.playlist_append(episode)
+        for episode in config.episodes:
+            self.player.playlist_append(episode.path)
 
-    def start(self, index: int | None = None) -> None:
-        if index is not None:
-            self.player.playlist_pos = index
+        self.player.pause = True
+        self.player.playlist_pos = config.index
+        self.episodeConfig = config
 
+    def start(self) -> None:
         self.player.pause = False
 
     def stop(self) -> None:

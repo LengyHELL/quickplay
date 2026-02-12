@@ -1,6 +1,9 @@
+import simplejson as json
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QPainter, QPalette, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
+
+from episode import Episode, EpisodeConfig
 
 
 class QuickPlayUtil:
@@ -26,3 +29,16 @@ class QuickPlayUtil:
         painter.end()
 
         return QIcon(pixmap)
+
+    @staticmethod
+    def loadEpisodes(filePath: str) -> EpisodeConfig:
+        with open(filePath, "r", encoding="utf-8") as file:
+            data = json.loads(file.read())
+            episodes = [Episode(**e) for e in data["episodes"]]
+            return EpisodeConfig(data["index"], episodes)
+
+    @staticmethod
+    def saveEpisodes(filePath: str, config: EpisodeConfig) -> None:
+        with open(filePath, "w", encoding="utf-8") as file:
+            data = {"index": config.index, "episodes": [e.__dict__ for e in config.episodes]}
+            file.write(json.dumps(data, indent=2))

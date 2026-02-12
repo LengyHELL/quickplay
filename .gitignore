@@ -3,6 +3,6 @@
 build
 dist
 _internal/folders.txt
-_internal/quickplay.txt
+_internal/quickplay.json
 _internal/libmpv-2.dll
 __pycache__

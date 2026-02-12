@@ -1,9 +1,10 @@
 import os
 import re
-from functools import partial
 
 from PyQt6.QtGui import QPalette, QStandardItem
+from PyQt6.QtWidgets import QApplication
 
+from episode import Episode, EpisodeConfig
 from quickplay_model import QuickplayModel
 from quickplay_utils import QuickPlayUtil
 from quickplay_view import QuickplayView
@@ -13,8 +14,8 @@ class QuickplayController:
     def __init__(self, model: QuickplayModel, view: QuickplayView) -> None:
         self._model = model
         self._view = view
-        self._episodeList: list[str] = []
-        self.filteredEpisodes: list[str] = []
+        self._episodeList: list[Episode] = []
+        self.filteredEpisodes: list[Episode] = []
 
         self._parseArguments()
         self._readTitles()
@@ -24,6 +25,7 @@ class QuickplayController:
         self._setEpisodeSelectDisable()
         self._observePlayerFullscreen()
         self._observePlayerQuit()
+        self._observeAboutToQuit()
 
     def _parseArguments(self) -> None:
         args = self._model.parseArguments()
@@ -37,12 +39,12 @@ class QuickplayController:
     def _connectInputs(self) -> None:
         self._view.titleSelect.search.textChanged.connect(self._filterTitles)
         self._view.titleSelect.next.clicked.connect(self._goToEpisodes)
-        self._view.titleSelect.startPrevious.clicked.connect(partial(self._goToPlayer, []))
+        self._view.titleSelect.startPrevious.clicked.connect(lambda: self._goToPlayer(None))
         self._view.titleSelect.list.doubleClicked.connect(self._goToEpisodes)
         self._view.titleSelect.list.selectionModel().selectionChanged.connect(self._setTitleSelectDisable)
 
         self._view.episodeSelect.search.textChanged.connect(self._filterEpisodes)
-        self._view.episodeSelect.back.clicked.connect(partial(self._selectPage, 0))
+        self._view.episodeSelect.back.clicked.connect(self._goToTitles)
         self._view.episodeSelect.startAll.clicked.connect(self._startAllEpisodes)
         self._view.episodeSelect.start.clicked.connect(self._startSelectedEpisodes)
         self._view.episodeSelect.list.doubleClicked.connect(self._startSelectedEpisodes)
@@ -73,6 +75,12 @@ class QuickplayController:
 
     def _observePlayerQuit(self) -> None:
         self._view.videoPlayer.player.quitEvent.connect(self._stopPlayback)
+
+    def _observeAboutToQuit(self) -> None:
+        QApplication.instance().aboutToQuit.connect(self._saveConfig)
+
+    def _goToTitles(self) -> None:
+        self._selectPage(0)
 
     def _readTitles(self) -> None:
         self.titleList: list[tuple[str, str]] = []
@@ -122,7 +130,7 @@ class QuickplayController:
             dirs = os.listdir(directory)
             for d in dirs:
                 if os.path.isfile(os.path.join(directory, d)) and os.path.splitext(d)[-1] in self.extensions:
-                    self._episodeList.append(d)
+                    self._episodeList.append(Episode(d, os.path.join(directory, d), 0.0, False))
         else:
             print(f"Failed to find directory '{directory}'!")
 
@@ -134,20 +142,17 @@ class QuickplayController:
         else:
             self.filteredEpisodes = list(
                 filter(
-                    lambda x: x.lower().find(text.lower()) >= 0,
+                    lambda x: x.name.lower().find(text.lower()) >= 0,
                     self._episodeList,
                 )
             )
 
         self._view.episodeSelect.list.clearSelection()
         self._view.episodeSelect.listModel.clear()
-        for index, episode in enumerate(self.filteredEpisodes):
+        for episode in self.filteredEpisodes:
             icon = QuickPlayUtil.icon("check", QPalette.ColorRole.Text)
-            item = QStandardItem(icon, episode) if index % 2 == 0 else QStandardItem(episode)
+            item = QStandardItem(icon, episode.name) if episode.completed else QStandardItem(episode.name)
             self._view.episodeSelect.listModel.appendRow(item)
-
-    def _getEpisodes(self) -> None:
-        return self._episodeList
 
     def _startAllEpisodes(self) -> None:
         self._goToPlayer(self._episodeList)
@@ -156,17 +161,27 @@ class QuickplayController:
         indexes = [i.row() for i in self._view.episodeSelect.list.selectedIndexes()]
         self._goToPlayer([self.filteredEpisodes[i] for i in indexes])
 
-    def _goToPlayer(self, episodes: list[str]) -> None:
-        if episodes:
-            index = self._view.titleSelect.list.selectedIndexes()[0].row()
-            base, title = self.filteredTitles[index]
-            paths = [os.path.join(base, title, episode) for episode in episodes]
+    def _goToPlayer(self, episodes: list[Episode] | None = None) -> None:
+        config: EpisodeConfig = None
 
-            self._view.videoPlayer.player.loadEpisodes(paths)
-            self._selectPage(2)
-            self._view.videoPlayer.player.start(0)
+        if episodes is None:
+            config = QuickPlayUtil.loadEpisodes(self.playlistFile)
+        else:
+            config = EpisodeConfig(0, episodes)
+            QuickPlayUtil.saveEpisodes(self.playlistFile, config)
+
+        self._view.videoPlayer.player.loadEpisodes(config)
+        self._selectPage(2)
+        self._view.videoPlayer.player.start()
 
     def _stopPlayback(self) -> None:
         self._view.videoPlayer.player.stop()
+        self._saveConfig()
         self._handleFullscreen(False)
-        self._goToEpisodes()
+        if len(self._view.titleSelect.list.selectedIndexes()) <= 0:
+            self._goToTitles()
+        else:
+            self._goToEpisodes()
+
+    def _saveConfig(self) -> None:
+        QuickPlayUtil.saveEpisodes(self.playlistFile, self._view.videoPlayer.player.episodeConfig)

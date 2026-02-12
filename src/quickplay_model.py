@@ -26,7 +26,7 @@ class QuickplayModel:
             "-p",
             "--playlist",
             dest="playlistFile",
-            default="_internal/quickplay.txt",
+            default="_internal/quickplay.json",
             help="The playlist config text file used for storing playlist elements.",
             metavar="FILE",
         )

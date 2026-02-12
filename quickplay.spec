@@ -8,7 +8,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ("./_internal/folders.txt", "."),
-        ("./_internal/quickplay.txt", "."),
+        ("./_internal/quickplay.json", "."),
         ("./_internal/icon.ico", "."),
         ("./_internal/icon.png", "."),
         ("./_internal/styles.qss", "."),
