@@ -2,32 +2,31 @@ import os
 
 from PyQt6.QtWidgets import QApplication
 
-from models.app_config import AppConfig
 from models.episode import Episode, EpisodeConfig
 from models.page import Page
 from models.title import Title
+from services.config_service import ConfigService
 from services.directory_service import DirectoryService
 from services.episode_service import EpisodeService
-from services.playlist_service import PlaylistService
 from views.main_window import MainWindow
 
 
 class QuickplayController:
     def __init__(
         self,
-        config: AppConfig,
         view: MainWindow,
         directoryService: DirectoryService,
-        playlistService: PlaylistService,
+        configService: ConfigService,
         episodeService: EpisodeService,
     ) -> None:
-        self._config = config
         self._view = view
         self._directoryService = directoryService
-        self._playlistService = playlistService
+        self._configService = configService
         self._episodeService = episodeService
+        self._config = self._configService.loadAppConfig()
 
-        titles = self._directoryService.scanTitles(config.folderFile, config.extensions)
+        self._view.titleSelect.startPreviousDisabled.emit(not os.path.isfile(self._config.playlistFile))
+        titles = self._directoryService.scanTitles(self._config.folders, self._config.extensions)
         self._view.titleSelect.setTitles(titles)
 
         self._connectSignals()
@@ -55,12 +54,13 @@ class QuickplayController:
         self._view.setPage(Page.EPISODES)
 
     def _onStartPrevious(self) -> None:
-        config = self._playlistService.load(self._config.playlistFile)
+        config = self._configService.loadEpisodeConfig(self._config.playlistFile)
         self._startPlayback(config)
 
     def _onEpisodesSelected(self, episodes: list[Episode]) -> None:
         config = EpisodeConfig(0, episodes)
-        self._playlistService.save(self._config.playlistFile, config)
+        self._configService.saveEpisodeConfig(self._config.playlistFile, config)
+        self._view.titleSelect.startPreviousDisabled.emit(False)
         self._startPlayback(config)
 
     def _startPlayback(self, config: EpisodeConfig) -> None:
@@ -91,7 +91,8 @@ class QuickplayController:
     def _saveConfig(self) -> None:
         try:
             episodeConfig = self._view.playerPage.player.episodeConfig
-            self._playlistService.save(self._config.playlistFile, episodeConfig)
+            self._configService.saveEpisodeConfig(self._config.playlistFile, episodeConfig)
+            self._view.titleSelect.startPreviousDisabled.emit(False)
 
             episodes = episodeConfig.episodes
             statusFilePath = os.path.join(episodes[0].base, self._config.statusFile)

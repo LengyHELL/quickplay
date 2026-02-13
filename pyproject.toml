@@ -1,3 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quickplay"
+authors = [{ name = "Mark Lengyel", email = "ubi19998@gmail.com" }]
+readme = "README.md"
+requires-python = "==3.11.5"
+version = "v2026.02.13-1"
+
+dependencies = [
+    "mpv==1.0.8",
+    "pyinstaller==6.18.0",
+    "PyQt6==6.10.2",
+    "simplejson==3.20.2",
+]
+
 [tool.ruff]
 line-length = 120
 target-version = "py311"

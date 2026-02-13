@@ -4,10 +4,10 @@ import sys
 from PyQt6.QtWidgets import QApplication
 
 from controller import QuickplayController
+from services.config_service import ConfigService
 from services.directory_service import DirectoryService
 from services.episode_service import EpisodeService
-from services.playlist_service import PlaylistService
-from utils import getStylesheet, parseArguments
+from utils import getStylesheet
 from views.main_window import MainWindow
 
 
@@ -17,16 +17,14 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setStyleSheet(getStylesheet("_internal/styles.qss"))
 
-    config = parseArguments()
-
     view = MainWindow()
     view.show()
 
     directoryService = DirectoryService()
-    playlistService = PlaylistService()
+    configService = ConfigService()
     episodeService = EpisodeService()
 
-    _controller = QuickplayController(config, view, directoryService, playlistService, episodeService)
+    _controller = QuickplayController(view, directoryService, configService, episodeService)
 
     sys.exit(app.exec())
 

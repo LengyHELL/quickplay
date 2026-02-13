@@ -5,31 +5,24 @@ from models.title import Title
 
 
 class DirectoryService:
-    def scanTitles(self, folderFile: str, extensions: list[str]) -> list[Title]:
+    def scanTitles(self, folders: list[str], extensions: list[str]) -> list[Title]:
         titles: list[Title] = []
 
-        if not os.path.isfile(folderFile):
-            print(f"Failed to open folder file '{folderFile}'!")
-            return titles
+        for folder in folders:
+            if not os.path.isdir(folder):
+                print(f"Failed to find directory '{folder}'!")
+                continue
 
-        with open(folderFile, "r", encoding="utf-8") as file:
-            folders = [folder.strip() for folder in file.readlines()]
+            directories = os.listdir(folder)
 
-            for folder in folders:
-                if not os.path.isdir(folder):
-                    print(f"Failed to find directory '{folder}'!")
-                    continue
+            for directory in directories:
+                path = os.path.join(folder, directory)
 
-                directories = os.listdir(folder)
-
-                for directory in directories:
-                    path = os.path.join(folder, directory)
-
-                    if os.path.isdir(path) and any(
-                        os.path.isfile(os.path.join(path, entry)) and os.path.splitext(entry)[1] in extensions
-                        for entry in os.listdir(path)
-                    ):
-                        titles.append(Title(directory, folder))
+                if os.path.isdir(path) and any(
+                    os.path.isfile(os.path.join(path, entry)) and os.path.splitext(entry)[1] in extensions
+                    for entry in os.listdir(path)
+                ):
+                    titles.append(Title(directory, folder))
 
         return titles
 

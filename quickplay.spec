@@ -5,16 +5,12 @@
 a = Analysis(
     ["src/main.py"],
     pathex=["./src"],
-    binaries=[],
+    binaries=[("./_internal/libmpv-2.dll", ".")],
     datas=[
-        ("./_internal/folders.txt", "."),
-        ("./_internal/quickplay.json", "."),
         ("./_internal/icon.ico", "."),
         ("./_internal/icon.png", "."),
         ("./_internal/styles.qss", "."),
         ("./_internal/icons", "icons"),
-        ("./_internal/icons", "icons"),
-        ("./_internal/libmpv-2.dll", "."),
     ],
     hiddenimports=[],
     hookspath=[],

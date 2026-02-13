@@ -1,7 +1,7 @@
 .venv
 build
 dist
-_internal/folders.txt
+_internal/config.json
 _internal/quickplay.json
 _internal/libmpv-2.dll
 __pycache__

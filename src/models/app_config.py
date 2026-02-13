@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass
 class AppConfig:
-    folderFile: str
     playlistFile: str
     statusFile: str
+    folders: list[str]
     extensions: list[str]

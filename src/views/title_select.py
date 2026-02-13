@@ -10,6 +10,7 @@ TITLE_VALUE_ROLE = Qt.ItemDataRole.UserRole + 1
 class TitleSelect(QWidget):
     titleSelected = pyqtSignal(Title)
     startPreviousClicked = pyqtSignal()
+    startPreviousDisabled = pyqtSignal(bool)
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
@@ -54,6 +55,7 @@ class TitleSelect(QWidget):
         self._startPrevious.clicked.connect(self.startPreviousClicked)
         self._list.doubleClicked.connect(self._onNextClicked)
         self._list.selectionModel().selectionChanged.connect(self._updateButtonState)
+        self.startPreviousDisabled.connect(self._startPrevious.setDisabled)
         self._updateButtonState()
 
     def _updateButtonState(self) -> None:
