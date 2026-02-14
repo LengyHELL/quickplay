@@ -7,7 +7,7 @@ name = "quickplay"
 authors = [{ name = "Mark Lengyel", email = "ubi19998@gmail.com" }]
 readme = "README.md"
 requires-python = "==3.11.5"
-version = "v2026.02.13-1"
+version = "v2026.02.14-4"
 
 dependencies = [
     "mpv==1.0.8",

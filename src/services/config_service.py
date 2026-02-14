@@ -1,36 +1,49 @@
 import os
+from dataclasses import asdict
 
 import simplejson as json
 
 from models.app_config import AppConfig
-from models.episode import Episode, EpisodeConfig
+from models.playlist_config import PlaylistConfig
 
 APP_CONFIG_PATH = "_internal/config.json"
 
 
 class ConfigService:
+    def _createDefaultConfig(self) -> AppConfig:
+        return AppConfig.fromDict(
+            {
+                "playlistConfig": "_internal/quickplay.json",
+                "folders": ["C:\\Users\\Public"],
+                "extensions": [".mkv", ".mp4"],
+            }
+        )
+
+    def _createDefaultPlaylistConfig(self) -> PlaylistConfig:
+        return PlaylistConfig.fromDict({"previous": {"index": 0, "episodes": []}, "titles": []})
+
     def loadAppConfig(self) -> AppConfig:
         if os.path.isfile(APP_CONFIG_PATH):
             with open(APP_CONFIG_PATH, "r", encoding="utf-8") as file:
-                data = json.loads(file.read())
-                return AppConfig(**data)
+                return AppConfig.fromDict(json.loads(file.read()))
         else:
-            config = AppConfig("_internal/quickplay.json", "quickplay.json", ["C:\\Users\\Public"], [".mkv", ".mp4"])
+            config = self._createDefaultConfig()
             self.saveAppConfig(config)
             return config
 
     def saveAppConfig(self, config: AppConfig) -> None:
         with open(APP_CONFIG_PATH, "w", encoding="utf-8") as file:
-            data = config.__dict__
-            file.write(json.dumps(data, indent=2))
+            file.write(json.dumps(asdict(config), indent=2))
 
-    def loadEpisodeConfig(self, path: str) -> EpisodeConfig:
-        with open(path, "r", encoding="utf-8") as file:
-            data = json.loads(file.read())
-            episodes = [Episode(**e) for e in data["episodes"]]
-            return EpisodeConfig(data["index"], episodes)
+    def loadPlaylistConfig(self, path: str) -> PlaylistConfig:
+        if os.path.isfile(path):
+            with open(path, "r", encoding="utf-8") as file:
+                return PlaylistConfig.fromDict(json.loads(file.read()))
+        else:
+            config = self._createDefaultPlaylistConfig()
+            self.savePlaylistConfig(path, config)
+            return config
 
-    def saveEpisodeConfig(self, path: str, config: EpisodeConfig) -> None:
+    def savePlaylistConfig(self, path: str, config: PlaylistConfig) -> None:
         with open(path, "w", encoding="utf-8") as file:
-            data = {"index": config.index, "episodes": [e.__dict__ for e in config.episodes]}
-            file.write(json.dumps(data, indent=2))
+            file.write(json.dumps(asdict(config), indent=2))

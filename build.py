@@ -17,10 +17,16 @@ if "--bump" in sys.argv:
     n = old_n + 1 if old_date == date else 1
     new_version = f"v{date}-{n}"
 
-    pyproject.write_text(re.sub(r'version = ".*"', f'version = "{new_version}"', pyproject.read_text()))
+    content = re.sub(r'^version = ".*"', f'version = "{new_version}"', pyproject.read_text(), flags=re.MULTILINE)
+    pyproject.write_text(content)
     print(f"Version: {version} -> {new_version}")
     version = new_version
 
-Path("src/_version.py").write_text(f'VERSION = "{version}"\n')
+versionFile = Path("src/_version.py")
+versionFileBackup = versionFile.read_text()
 
+versionFile.write_text(f'VERSION = "{version}"\n')
 subprocess.run([sys.executable, "-m", "PyInstaller", "--noconfirm", "quickplay.spec"], check=True)
+
+if "--bump" in sys.argv:
+    versionFile.write_text(versionFileBackup)

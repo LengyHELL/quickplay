@@ -66,8 +66,8 @@ class TitleSelect(QWidget):
         if not indexes:
             return
 
-        source_index = self._proxyModel.mapToSource(indexes[0])
-        item = self._sourceModel.item(source_index.row())
+        sourceIndex = self._proxyModel.mapToSource(indexes[0])
+        item = self._sourceModel.item(sourceIndex.row())
         title: Title = item.data(TITLE_VALUE_ROLE)
         self.titleSelected.emit(title)
 

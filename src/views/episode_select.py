@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from models.episode import Episode
+from models.episode_config import EpisodeConfig
 from utils import makeIcon
 
 
@@ -42,8 +42,8 @@ class EpisodeItemDelegate(QStyledItemDelegate):
             )
             painter.fillRect(indicatorRect, accentColor)
 
-        text_offset = self.iconSize + self.iconSpacing * 2
-        option.rect = option.rect.adjusted(text_offset, 0, 0, 0)
+        textOffset = self.iconSize + self.iconSpacing * 2
+        option.rect = option.rect.adjusted(textOffset, 0, 0, 0)
 
         text = index.data(Qt.ItemDataRole.DisplayRole)
         painter.setPen(option.palette.text().color())
@@ -53,21 +53,21 @@ class EpisodeItemDelegate(QStyledItemDelegate):
 
         icon: QIcon = index.data(Qt.ItemDataRole.DecorationRole)
         if icon:
-            icon_x = option.rect.left() - text_offset + self.iconSpacing
-            icon_y = option.rect.top() + (option.rect.height() - self.iconSize) // 2
-            painter.drawPixmap(icon_x, icon_y, self.iconSize, self.iconSize, icon.pixmap(self.iconSize, self.iconSize))
+            iconX = option.rect.left() - textOffset + self.iconSpacing
+            iconY = option.rect.top() + (option.rect.height() - self.iconSize) // 2
+            painter.drawPixmap(iconX, iconY, self.iconSize, self.iconSize, icon.pixmap(self.iconSize, self.iconSize))
 
     def sizeHint(self, option: QStyleOptionViewItem, index: int) -> QSize:
         return super().sizeHint(option, index)
 
 
 class EpisodeSelect(QWidget):
-    episodesSelected = pyqtSignal(list)
+    episodesSelected = pyqtSignal(EpisodeConfig)
     backClicked = pyqtSignal()
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
-        self._episodes: list[Episode] = []
+        self._episodeConfig: EpisodeConfig = EpisodeConfig(0, [])
 
         self._layout = QVBoxLayout()
         self.setLayout(self._layout)
@@ -120,7 +120,7 @@ class EpisodeSelect(QWidget):
         self._start.setDisabled(len(self._list.selectedIndexes()) <= 0)
 
     def _onStartAllClicked(self) -> None:
-        self.episodesSelected.emit(self._episodes)
+        self.episodesSelected.emit(self._episodeConfig)
 
     def _onStartClicked(self) -> None:
         indexes = self._list.selectedIndexes()
@@ -129,18 +129,20 @@ class EpisodeSelect(QWidget):
 
         selected = []
         for idx in indexes:
-            source_idx = self._proxyModel.mapToSource(idx)
-            selected.append(self._episodes[source_idx.row()])
-        self.episodesSelected.emit(selected)
+            sourceIndex = self._proxyModel.mapToSource(idx)
+            selected.append(self._episodeConfig.episodes[sourceIndex.row()])
+        self.episodesSelected.emit(EpisodeConfig(0, selected))
 
-    def setEpisodes(self, episodes: list[Episode]) -> None:
-        self._episodes = episodes
+    def setEpisodes(self, episodeConfig: EpisodeConfig) -> None:
+        self._episodeConfig = episodeConfig
         self._sourceModel.clear()
         self._search.clear()
+
         unseen = makeIcon("circle", QPalette.ColorRole.PlaceholderText)
         inProgress = makeIcon("clock", QPalette.ColorRole.Text)
         completed = makeIcon("check-circle", QPalette.ColorRole.BrightText)
-        for episode in episodes:
+
+        for episode in episodeConfig.episodes:
             icon = completed if episode.completed else inProgress if episode.progress > 0 else unseen
             item = QStandardItem(icon, episode.name)
             self._sourceModel.appendRow(item)

@@ -1,13 +1,10 @@
-import os
-
 from PyQt6.QtWidgets import QApplication
 
-from models.episode import Episode, EpisodeConfig
+from models.episode_config import EpisodeConfig
 from models.page import Page
 from models.title import Title
 from services.config_service import ConfigService
 from services.directory_service import DirectoryService
-from services.episode_service import EpisodeService
 from views.main_window import MainWindow
 
 
@@ -17,15 +14,16 @@ class QuickplayController:
         view: MainWindow,
         directoryService: DirectoryService,
         configService: ConfigService,
-        episodeService: EpisodeService,
     ) -> None:
         self._view = view
+
         self._directoryService = directoryService
         self._configService = configService
-        self._episodeService = episodeService
-        self._config = self._configService.loadAppConfig()
 
-        self._view.titleSelect.startPreviousDisabled.emit(not os.path.isfile(self._config.playlistFile))
+        self._config = self._configService.loadAppConfig()
+        self._playlistConfig = self._configService.loadPlaylistConfig(self._config.playlistConfig)
+
+        self._view.titleSelect.startPreviousDisabled.emit(len(self._playlistConfig.previous.episodes) <= 0)
         titles = self._directoryService.scanTitles(self._config.folders, self._config.extensions)
         self._view.titleSelect.setTitles(titles)
 
@@ -41,27 +39,24 @@ class QuickplayController:
         self._view.playerPage.player.isFullscreen.connect(self._onFullscreen)
         QApplication.instance().aboutToQuit.connect(self._saveConfig)
 
+    def _savePlaylistConfig(self) -> None:
+        self._configService.savePlaylistConfig(self._config.playlistConfig, self._playlistConfig)
+
     def _onTitleSelected(self, title: Title) -> None:
         episodes = self._directoryService.scanEpisodes(title, self._config.extensions)
-
-        statusFilePath = os.path.join(title.base, title.name, self._config.statusFile)
-        if os.path.isfile(statusFilePath):
-            statusEpisodes = self._episodeService.load(statusFilePath)
-            episodes = self._episodeService.matchEpisodes(episodes, statusEpisodes)
-        self._episodeService.save(statusFilePath, episodes)
-
-        self._view.episodeSelect.setEpisodes(episodes)
+        episodeConfig = self._playlistConfig.updateTitles(title, EpisodeConfig(0, episodes))
+        self._savePlaylistConfig()
+        self._view.episodeSelect.setEpisodes(episodeConfig)
         self._view.setPage(Page.EPISODES)
 
     def _onStartPrevious(self) -> None:
-        config = self._configService.loadEpisodeConfig(self._config.playlistFile)
-        self._startPlayback(config)
+        self._startPlayback(self._playlistConfig.previous)
 
-    def _onEpisodesSelected(self, episodes: list[Episode]) -> None:
-        config = EpisodeConfig(0, episodes)
-        self._configService.saveEpisodeConfig(self._config.playlistFile, config)
+    def _onEpisodesSelected(self, episodeConfig: EpisodeConfig) -> None:
+        self._playlistConfig.updatePrevious(episodeConfig)
+        self._savePlaylistConfig()
         self._view.titleSelect.startPreviousDisabled.emit(False)
-        self._startPlayback(config)
+        self._startPlayback(self._playlistConfig.previous)
 
     def _startPlayback(self, config: EpisodeConfig) -> None:
         self._view.playerPage.player.loadEpisodes(config)
@@ -91,15 +86,11 @@ class QuickplayController:
     def _saveConfig(self) -> None:
         try:
             episodeConfig = self._view.playerPage.player.episodeConfig
-            self._configService.saveEpisodeConfig(self._config.playlistFile, episodeConfig)
+            self._playlistConfig.updatePrevious(episodeConfig)
             self._view.titleSelect.startPreviousDisabled.emit(False)
 
-            episodes = episodeConfig.episodes
-            statusFilePath = os.path.join(episodes[0].base, self._config.statusFile)
-            if os.path.isfile(statusFilePath):
-                statusEpisodes = self._episodeService.load(statusFilePath)
-                episodes = self._episodeService.matchEpisodes(statusEpisodes, episodes)
-            self._episodeService.save(statusFilePath, episodes)
-            self._view.episodeSelect.setEpisodes(episodes)
+            episodeConfig = self._playlistConfig.updateTitles(episodeConfig.episodes[0].title, episodeConfig)
+            self._savePlaylistConfig()
+            self._view.episodeSelect.setEpisodes(episodeConfig)
         except AttributeError:
             print("Skipping config save.")

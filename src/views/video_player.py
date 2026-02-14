@@ -1,6 +1,6 @@
 import os
 
-from models.episode import EpisodeConfig
+from models.episode_config import EpisodeConfig
 
 os.environ["PATH"] = os.path.dirname("./_internal/libmpv-2.dll") + os.pathsep + os.environ["PATH"]
 import mpv

@@ -37,6 +37,6 @@ class DirectoryService:
         directories = os.listdir(path)
         for directory in directories:
             if os.path.isfile(os.path.join(path, directory)) and os.path.splitext(directory)[-1] in extensions:
-                episodes.append(Episode(directory, os.path.join(path, directory), path, 0.0, False))
+                episodes.append(Episode(directory, os.path.join(path, directory), title, 0.0, False))
 
         return episodes
