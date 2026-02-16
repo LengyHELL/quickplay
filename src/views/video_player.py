@@ -16,6 +16,7 @@ class VideoPlayer(QWidget):
     player: mpv.MPV
     episodeConfig: EpisodeConfig
     loadingEpisodes: bool
+    previousPos: int
 
     keyboardKeys: dict[Qt.Key, str] = {
         Qt.Key.Key_Escape: "ESC",
@@ -64,6 +65,7 @@ class VideoPlayer(QWidget):
         self._initCursorTimer()
         self._initPlayer()
         self.loadingEpisodes = False
+        self.previousPos = self.player.playlist_pos
 
     def _initPlayer(self) -> None:
         self.player = mpv.MPV(
@@ -143,12 +145,13 @@ class VideoPlayer(QWidget):
     def _updateEpisodeConfig(self, index: int) -> None:
         if self.loadingEpisodes:
             self.loadingEpisodes = False
+            self.previousPos = index
             return
 
         try:
-            if index != 0 and 0 <= index - 1 < len(self.episodeConfig.episodes):
-                self.episodeConfig.episodes[index - 1].progress = 0.0
-                self.episodeConfig.episodes[index - 1].completed = True
+            if index != 0 and 0 <= self.previousPos < len(self.episodeConfig.episodes):
+                self.episodeConfig.episodes[self.previousPos].progress = 0.0
+                self.episodeConfig.episodes[self.previousPos].completed = True
 
             if index == -1:
                 self.episodeConfig.episodes[index].progress = 0.0
@@ -159,6 +162,8 @@ class VideoPlayer(QWidget):
 
         except AttributeError:
             print("No episode config.")
+
+        self.previousPos = index
 
     def _updateProgress(self, progress: float) -> None:
         if progress is not None:

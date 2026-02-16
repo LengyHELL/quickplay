@@ -27,7 +27,7 @@ QTabBar::tab {
     border-top-right-radius: 4px;
     color: palette(button-text);
     padding: 4px;
-    border: 1px solid palette(mid);
+    border: 1px solid palette(alternate-base);
 }
 
 QTabBar::tab:selected, QTabBar::tab:selected:hover {
@@ -36,5 +36,5 @@ QTabBar::tab:selected, QTabBar::tab:selected:hover {
 }
 
 QTabBar::tab:hover {
-    background-color: palette(light);
+    background-color: palette(alternate-base);
 }
