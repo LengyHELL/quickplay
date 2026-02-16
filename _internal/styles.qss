@@ -9,3 +9,32 @@ QPushButton {
 QListView::item {
     height: 32px;
 }
+
+QTabWidget {
+    background-color: palette(window);
+}
+
+QTabWidget:pane {
+    top: -1px;
+}
+
+QTabWidget::tab-bar {
+    left: 4px;
+}
+
+QTabBar::tab {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    color: palette(button-text);
+    padding: 4px;
+    border: 1px solid palette(mid);
+}
+
+QTabBar::tab:selected, QTabBar::tab:selected:hover {
+    background-color: palette(window);
+    border-bottom-color: palette(window);
+}
+
+QTabBar::tab:hover {
+    background-color: palette(light);
+}

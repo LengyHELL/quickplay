@@ -14,7 +14,7 @@ class ConfigService:
         return AppConfig.fromDict(
             {
                 "playlistConfig": "_internal/quickplay.json",
-                "folders": ["C:\\Users\\Public"],
+                "folders": [],
                 "extensions": [".mkv", ".mp4"],
             }
         )

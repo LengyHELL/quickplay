@@ -18,11 +18,14 @@ class DirectoryService:
             for directory in directories:
                 path = os.path.join(folder, directory)
 
-                if os.path.isdir(path) and any(
-                    os.path.isfile(os.path.join(path, entry)) and os.path.splitext(entry)[1] in extensions
-                    for entry in os.listdir(path)
-                ):
-                    titles.append(Title(directory, folder))
+                try:
+                    if os.path.isdir(path) and any(
+                        os.path.isfile(os.path.join(path, entry)) and os.path.splitext(entry)[1] in extensions
+                        for entry in os.listdir(path)
+                    ):
+                        titles.append(Title(directory, folder))
+                except PermissionError:
+                    print(f"No permission to read directory '{path}'!")
 
         return titles
 

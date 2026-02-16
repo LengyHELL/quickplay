@@ -4,8 +4,6 @@ import sys
 from PyQt6.QtWidgets import QApplication
 
 from controller import QuickplayController
-from services.config_service import ConfigService
-from services.directory_service import DirectoryService
 from utils import getStylesheet
 from views.main_window import MainWindow
 
@@ -19,10 +17,7 @@ def main() -> None:
     view = MainWindow()
     view.show()
 
-    directoryService = DirectoryService()
-    configService = ConfigService()
-
-    _controller = QuickplayController(view, directoryService, configService)
+    _controller = QuickplayController(view)
 
     sys.exit(app.exec())
 

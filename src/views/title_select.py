@@ -1,16 +1,20 @@
 from PyQt6.QtCore import QSortFilterProxyModel, Qt, pyqtSignal
-from PyQt6.QtGui import QStandardItem, QStandardItemModel
+from PyQt6.QtGui import QPalette, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QListView, QPushButton, QScrollBar, QVBoxLayout, QWidget
 
 from models.title import Title
+from utils import makeIcon
 
 TITLE_VALUE_ROLE = Qt.ItemDataRole.UserRole + 1
 
 
 class TitleSelect(QWidget):
     titleSelected = pyqtSignal(Title)
+    "title"
     startPreviousClicked = pyqtSignal()
     startPreviousDisabled = pyqtSignal(bool)
+    "isDisabled"
+    goToSettings = pyqtSignal()
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
@@ -24,9 +28,16 @@ class TitleSelect(QWidget):
         self._connectSignals()
 
     def _createSearch(self) -> None:
+        searchBarLayout = QHBoxLayout()
+
         self._search = QLineEdit()
         self._search.setPlaceholderText("Search")
-        self._layout.addWidget(self._search)
+        searchBarLayout.addWidget(self._search)
+
+        self._settings = QPushButton(makeIcon("settings", QPalette.ColorRole.Text), None)
+        searchBarLayout.addWidget(self._settings)
+
+        self._layout.addLayout(searchBarLayout)
 
     def _createTitleList(self) -> None:
         self._sourceModel = QStandardItemModel()
@@ -51,6 +62,7 @@ class TitleSelect(QWidget):
 
     def _connectSignals(self) -> None:
         self._search.textChanged.connect(self._proxyModel.setFilterFixedString)
+        self._settings.clicked.connect(self.goToSettings.emit)
         self._next.clicked.connect(self._onNextClicked)
         self._startPrevious.clicked.connect(self.startPreviousClicked)
         self._list.doubleClicked.connect(self._onNextClicked)

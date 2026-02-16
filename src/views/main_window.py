@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import QMainWindow, QStackedWidget
 from models.page import Page
 from views.episode_select import EpisodeSelect
 from views.player_page import PlayerPage
+from views.settings_page import SettingsPage
 from views.title_select import TitleSelect
 
 WINDOW_MIN_WIDTH = 800
@@ -20,11 +21,13 @@ class MainWindow(QMainWindow):
         self.titleSelect = TitleSelect(self)
         self.episodeSelect = EpisodeSelect(self)
         self.playerPage = PlayerPage(self)
+        self.settingsPage = SettingsPage(self)
 
         self._stackedWidget = QStackedWidget()
         self._stackedWidget.addWidget(self.titleSelect)
         self._stackedWidget.addWidget(self.episodeSelect)
         self._stackedWidget.addWidget(self.playerPage)
+        self._stackedWidget.addWidget(self.settingsPage)
 
         self.setCentralWidget(self._stackedWidget)
 
