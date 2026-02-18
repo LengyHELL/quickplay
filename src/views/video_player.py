@@ -17,6 +17,7 @@ class VideoPlayer(QWidget):
     episodeConfig: EpisodeConfig
     loadingEpisodes: bool
     previousPos: int
+    percentage: float
 
     keyboardKeys: dict[Qt.Key, str] = {
         Qt.Key.Key_Escape: "ESC",
@@ -66,6 +67,7 @@ class VideoPlayer(QWidget):
         self._initPlayer()
         self.loadingEpisodes = False
         self.previousPos = self.player.playlist_pos
+        self.percentage = 0.0
 
     def _initPlayer(self) -> None:
         self.player = mpv.MPV(
@@ -150,12 +152,11 @@ class VideoPlayer(QWidget):
 
         try:
             if index != 0 and 0 <= self.previousPos < len(self.episodeConfig.episodes):
-                self.episodeConfig.episodes[self.previousPos].progress = 0.0
-                self.episodeConfig.episodes[self.previousPos].completed = True
+                if self.percentage > 0.8:
+                    self.episodeConfig.episodes[self.previousPos].progress = 0.0
+                    self.episodeConfig.episodes[self.previousPos].completed = True
 
             if index == -1:
-                self.episodeConfig.episodes[index].progress = 0.0
-                self.episodeConfig.episodes[index].completed = True
                 self.quitEvent.emit()
             else:
                 self.episodeConfig.index = index
@@ -167,6 +168,8 @@ class VideoPlayer(QWidget):
 
     def _updateProgress(self, progress: float) -> None:
         if progress is not None:
+            duration: float = self.player.duration
+            self.percentage = 1.0 if duration is None else progress / duration
             self.episodeConfig.episodes[self.episodeConfig.index].progress = progress
 
     def _syncTimePos(self) -> None:
