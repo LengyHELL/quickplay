@@ -11,7 +11,7 @@ class PlaylistConfig:
     previous: EpisodeConfig
     titles: list[TitleConfig]
 
-    def _updateEpisodes(self, index: int, episodes: list[Episode]) -> list[Episode]:
+    def _updateEpisodes(self, index: int, episodes: list[Episode]) -> None:
         storedEpisodes = self.titles[index].episodeConfig.episodes
 
         for episode in episodes:
@@ -22,6 +22,8 @@ class PlaylistConfig:
                 storedEpisode.completed = storedEpisode.completed or episode.completed
             except ValueError:
                 storedEpisodes.append(episode)
+
+        storedEpisodes.sort(key=lambda e: e.name)
 
     def updatePrevious(self, previous: EpisodeConfig) -> None:
         self.previous = previous
@@ -35,6 +37,7 @@ class PlaylistConfig:
             return storedTitle.episodeConfig
         except ValueError:
             self.titles.append(TitleConfig(title, EpisodeConfig(0, episodeConfig.episodes)))
+            self.titles.sort(key=lambda t: t.title.name)
             return episodeConfig
 
     @classmethod
