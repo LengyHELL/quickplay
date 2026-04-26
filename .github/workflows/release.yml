@@ -37,7 +37,7 @@ jobs:
 
       - name: Download libmpv
         run: |
-          Invoke-WebRequest -Uri "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260211/mpv-dev-x86_64-v3-20260211-git-3847a81.7z" -OutFile mpv-dev.7z
+          Invoke-WebRequest -Uri "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260421/mpv-dev-x86_64-v3-20260421-git-5921fe5.7z" -OutFile mpv-dev.7z
           7z x mpv-dev.7z -ompv-dev
           Copy-Item mpv-dev/libmpv-2.dll -Destination _internal/
 
